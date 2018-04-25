@@ -12,8 +12,6 @@ private_message_handlers = {}
 
 print("\tBegin Loading Files")
 
-
-
 print("\tLoaded files")
 
 persistent_variables = {}
@@ -31,16 +29,19 @@ def add_message_handler(handler, keyword):
     message_handlers[keyword] = handler
 def add_private_message_handler(handler, keyword):
     private_message_handlers[keyword] = handler
-def update_user_data(channelid, obj, val, addon=False):
-    if channelid in server_data:
-        if addon:
-            if obj in server_data[channelid]:
-                server_data[channelid][obj] += val
-                return
-        server_data[channelid][obj] = val
-    else:
-        server_data[channelid] = {obj:val}
-
+def get_data():
+    return [server_data]
+#from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
+def nested_set(value, *keys):
+    dic = server_data
+    for key in keys[:-1]:
+        dic = dic.setdefault(key, {})
+    dic[keys[-1]] = value
+def nested_get(*keys):
+    dic = server_data
+    for key in keys:
+        dic=dic.setdefault( key, {} )
+    return dic
 print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
@@ -55,7 +56,7 @@ whitespace = [' ', '\t', '\n']
 
 @asyncio.coroutine
 def on_message(Demobot, msg):
-    if not msg.author.bot:
+    if not msg.author.bot and not msg.author.status == discord.Status.offline:
         try:
             if msg.channel.is_private:
                 yield from Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
