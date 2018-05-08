@@ -51,28 +51,48 @@ print("Command Initialization Finished")
 
 import asyncio
 import re
+from datetime import datetime, timedelta
 
-whitespace = [' ', '\t', '\n']
-
-@asyncio.coroutine
-def on_message(Demobot, msg):
-    if not msg.author.bot and not msg.author.status == discord.Status.offline:
+async def on_message(Demobot, msg):
+    if not msg.author.bot:
+        if msg.author.status == discord.Status.offline:
+            await Demobot.delete_message(msg)
+            outm = await Demobot.send_message(msg.channel, "Hey! You shouldn't be speaking while invisible.")
+            await asyncio.sleep(1)
+            await Demobot.delete_message(outm)
         try:
             if msg.channel.is_private:
-                yield from Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
+                await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
             for a in message_handlers:
                 reg = re.compile(a, re.I).search(msg.content)
                 if reg:
-                    yield from message_handlers[a](Demobot, msg, reg)
+                    await message_handlers[a](Demobot, msg, reg)
         except IndexError:
             em = discord.Embed(title="Missing Inputs", description="Not enough inputs provided.", colour=0xd32323)
-            yield from send_embed(Demobot, msg, em)
+            await send_embed(Demobot, msg, em)
         except (TypeError, ValueError):
             em = discord.Embed(title="Invalid Inputs", description="Invalid inputs provided.", colour=0xd32323)
-            yield from send_embed(Demobot, msg, em)
+            await send_embed(Demobot, msg, em)
         except discord.Forbidden:
             em = discord.Embed(title="Missing Permissions", description="Demobot is missing permissions to perform this task.", colour=0xd32323)
-            yield from send_embed(Demobot, msg, em)
+            await send_embed(Demobot, msg, em)
         except Exception as e:
             em = discord.Embed(title="Unknown Error", description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
-            yield from send_embed(Demobot, msg, em)
+            await send_embed(Demobot, msg, em)
+
+async def timed_message(Demobot):
+    currt = datetime.utcnow()
+    nextelection = currt + timedelta( (2-currt.weekday()) % 7 + 1 )
+    nextelection = nextelection.replace(hour=0, minute=0, second=0, microsecond=0)
+    await asyncio.sleep((nextelection-currt).total_seconds())
+    for a in server_data:
+        chann = nested_get(a, "channels", "announcements")
+        if chann:
+            electionmsg = await Demobot.send_message(chann, "Hey @everyone! You may now run for positions in government!\nTo do so, type `I am running for (position)`. Remove the parentheses!")
+        nested_set(electionmsg, a, "elections", "runnable")
+    await asyncio.sleep(86400)
+    for a in server_data:
+        chann = nested_get(a, "channels", "announcements")
+        if chann:
+            electionmsg = await Demobot.send_message(chann, "Elections have started.")
+        nested_set(electionmsg, a, "elections", "runnable")
