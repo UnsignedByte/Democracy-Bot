@@ -12,10 +12,10 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 class DemocracyClient(discord.Client):
-    async     def on_ready(self):
+    async def on_ready(self):
         await self.change_presence(game=discord.Game(name='The Democracy', url='https://github.com/UnsignedByte/Democracy-Bot', type=1))
         await demobot.handlers.timed_message(self)
-    async     def on_message(self, message):
+    async def on_message(self, message):
         await demobot.handlers.on_message(self, message)
 Demobot = DemocracyClient()
 
