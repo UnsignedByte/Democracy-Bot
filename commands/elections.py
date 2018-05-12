@@ -4,6 +4,7 @@ from demobot.utils import *
 from demobot.handlers import add_message_handler, get_data
 from discord import Embed
 
+
 async def running(Demobot, msg, reg):
     await Demobot.send_message(msg.channel, "OKAY")
 
