@@ -25,23 +25,34 @@ if os.path.isfile("data/settings.txt"):
         server_data = pickle.load(f)
     copyfile("data/settings.txt", "data/data_backup/settings.txt")
 
+
 def add_message_handler(handler, keyword):
     message_handlers[keyword] = handler
+
+
 def add_private_message_handler(handler, keyword):
     private_message_handlers[keyword] = handler
+
+
 def get_data():
     return [server_data]
-#from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
+# from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
+
+
 def nested_set(value, *keys):
     dic = server_data
     for key in keys[:-1]:
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
+
+
 def nested_get(*keys):
     dic = server_data
     for key in keys:
         dic=dic.setdefault( key, {} )
     return dic
+
+
 print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
@@ -52,6 +63,7 @@ print("Command Initialization Finished")
 import asyncio
 import re
 from datetime import datetime, timedelta
+
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
@@ -79,6 +91,7 @@ async def on_message(Demobot, msg):
         except Exception as e:
             em = discord.Embed(title="Unknown Error", description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
             await send_embed(Demobot, msg, em)
+
 
 async def timed_message(Demobot):
     currt = datetime.utcnow()
