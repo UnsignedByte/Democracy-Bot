@@ -9,14 +9,16 @@ async def role(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
     if perms.manage_server:
         aliases = {
-            'rep': 'representative',
-            'representative': 'representative',
-            'leader': 'leader',
-            'president': 'leader',
-            'judge': 'judge',
-            'enforcer': 'enforcer',
-            'default': 'citizen',
-            'citizen': 'citizen'
+        'rep':'representative',
+        'representative':'representative',
+        'leader':'leader',
+        'president':'leader',
+        'pres':'leader',
+        'judge':'judge',
+        'enforcer':'enforcer',
+        'enf':'enforcer',
+        'default':'citizen',
+        'citizen':'citizen'
         }
         # update_user_data(msg.server.id, aliases[reg.group('name')], )
         if reg.group('role') is not '@everyone':
@@ -48,5 +50,5 @@ async def channel(Demobot, msg, reg):
                                    '.')
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(channel, r'make\s*(?P<channel><#(?P<channelid>[0-9]*)>)\s*(?:an?|the)\s*(?P<name>announcements?|elections?)\s*channel')
-add_message_handler(role, r'make\s*(?P<role><@!?(?P<roleid>[0-9]*)>|@everyone)\s*(?:an?|the)\s*(?P<name>leader|president|judge|enforcer|rep(?:resentative)?|citizen|default)\s*role')
+add_message_handler(channel, r'make\s*(?P<channel><#(?P<channelid>[0-9]*)>)\s*(?:an?|the)\s*(?P<name>announcements?|elections?)\s*channel$')
+add_message_handler(role, r'make\s*(?P<role><@&(?P<roleid>[0-9]*)>|@everyone)\s*(?:an?|the)\s*(?P<name>leader|pres(?:ident)?|judge|enf(?:orcer)?|rep(?:resentative)?|citizen|default)\s*role$')

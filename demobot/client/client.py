@@ -16,11 +16,14 @@ class DemocracyClient(discord.Client):
     async def on_ready(self):
         await self.change_presence(game=discord.Game(name='The Democracy', url='https://github.com/UnsignedByte/Democracy-Bot', type=1))
         await demobot.handlers.timed_message(self)
-
     async def on_message(self, message):
         await demobot.handlers.on_message(self, message)
-
-
+    async def on_message_edit(self, before, after):
+        await demobot.handlers.on_message(self, after)
+    async def on_member_update(self, before, after):
+        await demobot.handlers.member_update(self, before, after)
+    async def on_member_join(self, member):
+        await demobot.handlers.newuser(self, member)
 Demobot = DemocracyClient()
 
 
