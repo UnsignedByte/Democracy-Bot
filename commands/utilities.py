@@ -4,7 +4,8 @@ from demobot.utils import *
 from demobot.handlers import add_message_handler, get_data
 from discord import Embed
 
-async def save(Demobot, msg, reg, overrideperms = False):
+
+async def save(Demobot, msg, reg, overrideperms=False):
     if overrideperms or msg.author.id in ["418827664304898048"]:
         if not overrideperms:
             em = Embed(title="Saving Data...", description="Saving...", colour=0xd32323)
@@ -20,7 +21,8 @@ async def save(Demobot, msg, reg, overrideperms = False):
             await Demobot.delete_message(msg)
         return True
     else:
-        em = Embed(title="Insufficient Permissions", description=format_response("{_mention} does not have sufficient permissions to perform this task.", _msg=msg), colour=0xd32323)
+        em = Embed(title="Insufficient Permissions", description=format_response(
+            "{_mention} does not have sufficient permissions to perform this task.", _msg=msg), colour=0xd32323)
         await send_embed(Demobot, msg, em)
         return False
 
