@@ -4,6 +4,7 @@ from demobot.utils import *
 from demobot.handlers import add_message_handler, nested_get
 from discord import Embed
 
+
 async def running(Demobot, msg, reg):
     if nested_get(msg.server.id, "elections", "runnable"):
         print("yes")
