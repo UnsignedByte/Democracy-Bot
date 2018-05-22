@@ -152,7 +152,11 @@ async def newuser(Demobot, user):
     await utilities.save(None, None, None, overrideperms=True)
 async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
-    if msg in nested_get(msg.server.id, "proposals", "messages"):
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
+        if nested_get(msg.server.id, "roles", "representative") in msg.author.roles:
+            if msg in nested_get(msg.server.id, "proposals", "messages"):
+                pass
+    elif msg.channel = nested_get(msg.server.id, "channels", "elections"):
         pass
 async def on_reaction_delete(Demobot, reaction, user):
     print("OOF!")

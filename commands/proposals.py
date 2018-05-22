@@ -32,6 +32,4 @@ async def propose(Demobot, msg, reg):
         nested_append(newm, msg.server.id, "proposals", "messages")
         await save(None, None, None, overrideperms=True)
 
-
-
 add_message_handler(propose, r'<@&(?P<roleid>[0-9]*)>\s*(?P<type>.*?)\s*proposal:\n*(?:\*\*(?P<title>.*?)\*\*)?\n*(?P<content>(?:.|\n)*?)\Z')

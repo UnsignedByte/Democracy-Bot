@@ -3,6 +3,7 @@ import pickle
 from demobot.utils import *
 from demobot.handlers import add_message_handler, get_data
 from discord import Embed
+from pprint import pformat, pprint
 
 
 async def save(Demobot, msg, reg, overrideperms=False):
@@ -26,4 +27,9 @@ async def save(Demobot, msg, reg, overrideperms=False):
         await send_embed(Demobot, msg, em)
         return False
 
-add_message_handler(save, r'^save')
+async def getData(Demobot, msg, reg):
+    pprint(get_data()[0])
+    await Demobot.send_message(msg.channel, '```python\n'+pformat(get_data()[0])+'```')
+
+add_message_handler(save, r'save\Z')
+add_message_handler(getData, r'getdata\Z')
