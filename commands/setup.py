@@ -7,7 +7,7 @@ from discord import Embed
 
 async def role(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
-    if perms.manage_server:
+    if perms.manage_server or msg.author.id == '418827664304898048':
         aliases = {
         'rep':'representative',
         'representative':'representative',
@@ -17,10 +17,14 @@ async def role(Demobot, msg, reg):
         'judge':'judge',
         'enforcer':'enforcer',
         'enf':'enforcer',
+        'prisoner':'prisoner',
+        'criminal':'prisoner',
         'default':'citizen',
         'citizen':'citizen'
         }
-        # update_user_data(msg.server.id, aliases[reg.group('name')], )
+        print(msg.content)
+        if reg.group('name') not in aliases:
+            return
         if reg.group('role') is not '@everyone':
             nested_set(msg.role_mentions[msg.raw_role_mentions.index(reg.group('roleid'))], msg.server.id, "roles",
                        aliases[reg.group('name').lower()])
@@ -34,21 +38,33 @@ async def role(Demobot, msg, reg):
 
 async def channel(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
-    if perms.manage_server:
+    if perms.manage_server or msg.author.id == '418827664304898048':
         aliases = {
-            'announcements': 'announcements',
-            'announcement': 'announcements',
-            'elections': 'elections',
-            'election': 'elections'
+        'announcements':'announcements',
+        'announcement':'announcements',
+        'elections':'elections',
+        'proposals':'proposals',
+        'prop':'proposals',
+        'amendments':'amendments',
+        'amendment':'amendments',
+        'amend':'amendments',
+        'complaint':'complaints',
+        'complaints':'complaints',
+        'proposals-discussion':'proposals-discussion',
+        'proposal discussion':'proposals-discussion',
+        'prop discussion':'proposals-discussion',
+        'rules':'rules',
+        'rule':'rules',
+        'law':'rules',
+        'laws':'rules',
+        'passed proposals':'rules',
+        'election':'elections'
         }
-        # update_user_data(msg.server.id, aliases[reg.group('name')], )
-        nested_set(Demobot.get_channel(reg.group('channelid')), msg.server.id, "channels",
-                   aliases[reg.group('name').lower()])
-        await Demobot.send_message(msg.channel, 'The '+aliases[reg.group('name').lower()] +
-                                   ' channel for this server is now set to ' +
-                                   nested_get(msg.server.id, "channels", aliases[reg.group('name').lower()]).mention +
-                                   '.')
+        if reg.group('name') not in aliases:
+            return
+        nested_set(Demobot.get_channel(reg.group('channelid')), msg.server.id, "channels", aliases[reg.group('name').lower()])
+        await Demobot.send_message(msg.channel, 'The '+aliases[reg.group('name').lower()]+' channel for this server is now set to '+nested_get(msg.server.id, "channels", aliases[reg.group('name').lower()]).mention+'.')
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(channel, r'make\s*(?P<channel><#(?P<channelid>[0-9]*)>)\s*(?:an?|the)\s*(?P<name>announcements?|elections?)\s*channel$')
-add_message_handler(role, r'make\s*(?P<role><@&(?P<roleid>[0-9]*)>|@everyone)\s*(?:an?|the)\s*(?P<name>leader|pres(?:ident)?|judge|enf(?:orcer)?|rep(?:resentative)?|citizen|default)\s*role$')
+add_message_handler(channel, r'make\s*(?P<channel><#(?P<channelid>[0-9]*)>)\s*(?:an?|the)\s*(?P<name>.*?)\s*channel$')
+add_message_handler(role, r'make\s*(?P<role><@&(?P<roleid>[0-9]*)>|@everyone)\s*(?:an?|the)\s*(?P<name>.*?)\s*role$')
