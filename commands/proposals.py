@@ -8,10 +8,10 @@ from discord import Embed
 async def propose(Demobot, msg, reg):
     if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
         aliases = {
-        "rule": "rule",
-        "law": "rule",
-        "mod": "mod",
-        "moderation": "mod"
+            "rule": "rule",
+            "law": "rule",
+            "mod": "mod",
+            "moderation": "mod"
         }
         print(reg.group("type"))
         if reg.group("type"):
@@ -26,7 +26,10 @@ async def propose(Demobot, msg, reg):
             title = "Untitled Proposal"
         else:
             title = title.title()
-        newm = await Demobot.send_message(propchan, '%s %s Proposal:\n\n**%s**\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention, type, title, msg.id, reg.group("content")))
+        newm = await Demobot.send_message(
+            propchan,
+            '%s %s Proposal:\n\n**%s**\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
+                                                         type, title, msg.id, reg.group("content")))
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "➖")
@@ -34,4 +37,6 @@ async def propose(Demobot, msg, reg):
         print(newm.id)
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(propose, r'<@&(?P<roleid>[0-9]*)>\s*(?P<type>.*?)\s*proposal:\n*(?:\*\*(?P<title>.*?)\*\*)?\n*(?P<content>(?:.|\n)*?)\Z')
+add_message_handler(
+    propose,
+    r'<@&(?P<roleid>[0-9]*)>\s*(?P<type>.*?)\s*proposal:\n*(?:\*\*(?P<title>.*?)\*\*)?\n*(?P<content>(?:.|\n)*?)\Z')
