@@ -6,7 +6,7 @@ from discord import Embed
 
 
 async def propose(Demobot, msg, reg):
-    if nested_get(msg.server.id, "roles", "representative") in msg.author.roles and msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
         aliases = {
         "rule": "rule",
         "law": "rule",
@@ -31,6 +31,7 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "➖")
         nested_append(newm, msg.server.id, "proposals", "messages")
+        print(newm.id)
         await save(None, None, None, overrideperms=True)
 
 add_message_handler(propose, r'<@&(?P<roleid>[0-9]*)>\s*(?P<type>.*?)\s*proposal:\n*(?:\*\*(?P<title>.*?)\*\*)?\n*(?P<content>(?:.|\n)*?)\Z')

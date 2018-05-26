@@ -159,13 +159,19 @@ async def newuser(Demobot, user):
 
 
 async def on_reaction_add(Demobot, reaction, user):
+    if user.bot:
+        return
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
-        if nested_get(msg.server.id, "roles", "representative") in msg.author.roles:
-            if msg in nested_get(msg.server.id, "proposals", "messages"):
-                pass
+        if nested_get(msg.server.id, "roles", "representative") in user.roles:
+            if msg.id in [x.id for x in nested_get(msg.server.id, "proposals", "messages")]:
+                print('finally')
         else:
-            await enforcing.imprison(Demobot, msg.author)
+            await Demobot.remove_reaction(msg, reaction.emoji, user)
+            await Demobot.send_message(msg.channel, 'YOU AINT A REP ps the enforcing.imprison is broke')
+            print('u aint rep')
+            # the below line throws a huge error, pls fix
+            # await enforcing.imprison(Demobot, msg.author)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
 
