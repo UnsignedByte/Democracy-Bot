@@ -46,11 +46,13 @@ def nested_set(value, *keys):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
+
 def nested_get(*keys):
     dic = server_data
     for key in keys:
-        dic=dic.setdefault( key, {} )
+        dic = dic.setdefault( key, {} )
     return dic
+
 
 def nested_append(value, *keys):
     v = nested_get(*keys)
@@ -58,6 +60,7 @@ def nested_append(value, *keys):
         v.append(value)
     else:
         nested_set([value], *keys)
+
 
 def nested_remove(value, *keys, **kwargs):
     kwargs['func'] = kwargs.get('func', None)
@@ -137,6 +140,7 @@ async def elections_timed(Demobot):
             nested_set(electionmsg, a, "elections", "election")
         await asyncio.sleep(86400)
 
+
 async def minutely_check(Demobot):
     while True:
         await utilities.save(None, None, None, overrideperms=True)
@@ -145,11 +149,15 @@ async def minutely_check(Demobot):
 
 async def member_update(Demobot, before, after):
     nested_set(after, after.server.id, "members", after.id)
+
+
 async def newuser(Demobot, user):
     oldusr = nested_get(user.server.id, "members", user.id)
     await Demobot.add_roles(user, *oldusr.roles)
     await Demobot.change_nickname(user, oldusr.nick)
     await utilities.save(None, None, None, overrideperms=True)
+
+
 async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
@@ -160,5 +168,7 @@ async def on_reaction_add(Demobot, reaction, user):
             await enforcing.imprison(Demobot, msg.author)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
+
+
 async def on_reaction_delete(Demobot, reaction, user):
     print("OOF!")

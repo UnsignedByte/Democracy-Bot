@@ -4,6 +4,7 @@ from demobot.handlers import add_message_handler, nested_get, nested_append, nes
 from commands.utilities import save
 from discord import Embed
 
+
 async def propose(Demobot, msg, reg):
     if nested_get(msg.server.id, "roles", "representative") in msg.author.roles and msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
         aliases = {
