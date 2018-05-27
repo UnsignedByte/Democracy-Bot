@@ -146,12 +146,14 @@ async def member_update(Demobot, before, after):
     #nested_set(None, after.server.id, "members")
     roles = nested_get(after.server.id, 'roles')
     for a in after.roles:
+        try:
+            nested_append(after, after.server.id, 'members', list(roles.keys())[list(roles.values()).index(a)])
+        except ValueError:
+            pass
 
 async def newuser(Demobot, user):
-    oldusr = nested_get(user.server.id, "members", user.id)
-    await Demobot.add_roles(user, *oldusr.roles)
-    await Demobot.change_nickname(user, oldusr.nick)
-    await utilities.save(None, None, None, overrideperms=True)
+    if user in nested_get(user.server.id. "members", "citizen"):
+        await Demobot.add_roles(user, )
 async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):

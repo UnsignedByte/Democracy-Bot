@@ -13,7 +13,6 @@ async def propose(Demobot, msg, reg):
             "mod": "mod",
             "moderation": "mod"
         }
-        print(reg.group("type"))
         if reg.group("type"):
             if reg.group("type") not in aliases:
                 return
@@ -32,7 +31,6 @@ async def propose(Demobot, msg, reg):
                                                          type, title, msg.id, reg.group("content")))
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
-        await Demobot.add_reaction(newm, "➖")
         propobj = Proposal(newm, reg.group("title"), reg.group('content'))
         nested_append(propobj, msg.server.id, "proposals", "messages")
         await save(None, None, None, overrideperms=True)
