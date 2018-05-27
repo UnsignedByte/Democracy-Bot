@@ -23,9 +23,8 @@ class DemocracyClient(discord.Client):
                 for j in deepcopy(demobot.handlers.nested_get(a, "proposals", "messages")):
                     t = j.msg.edited_timestamp
                     t = t if t else j.msg.timestamp
-                    if (datetime.datetime.utcnow() - t).total_seconds() > 1:
-                        demobot.handlers.nested_remove(j, a, "proposals", "messages",
-                                                       func=lambda x, y: x.msg.id == y.msg.id)
+                    if (datetime.datetime.utcnow() - t).total_seconds() > 86400:
+                        demobot.handlers.nested_remove(j, a, "proposals", "messages")
                     else:
                         self.messages.append(j.msg)
         await self.change_presence(game=discord.Game(name='The Democracy', type=3))

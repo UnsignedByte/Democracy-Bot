@@ -118,9 +118,14 @@ class Votes:
 
 
 class Proposal:
-    def __init__(self, msg, title, content):
+    def __init__(self, msg, type, title, content):
         self.msg = msg
         self.votes = Votes()
         self.voted = []
+        self.type = type
         self.title = title
         self.content = content
+    def __eq__(self, a):
+        return self.msg == a.msg
+    def __ne__(self, a):
+        return not self.__eq__(a)

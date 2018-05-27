@@ -10,7 +10,11 @@ async def propose(Demobot, msg, reg):
             "rule": "rule",
             "law": "rule",
             "mod": "mod",
-            "moderation": "mod"
+            "moderation": "mod",
+            "amend":"amend",
+            "amendment":"amend",
+            "override":"override",
+            "rewrite":"override"
         }
         if reg.group("type"):
             if reg.group("type") not in aliases:
@@ -31,8 +35,8 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, reg.group("title"), reg.group('content'))
+        propobj = Proposal(newm, type, title, reg.group('content'))
         nested_append(propobj, msg.server.id, "proposals", "messages")
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(propose, r'<@&(?P<roleid>[0-9]*)>\s*(?P<type>.*?)\s*proposal:\n*(?:\*\*(?P<title>.*?)\*\*)?\n*(?P<content>(?:.|\n)*?)\Z')
+add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?:\*\*(?P<title>.*?)\*\*)?\s*(?P<content>(?:.|\n)*?)\Z')

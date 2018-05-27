@@ -185,10 +185,10 @@ async def on_reaction_add(Demobot, reaction, user):
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
                     await Demobot.send_message(msg.channel, 'dev message: don\'t vote twice, idiot')
                 else:
-                    prop.voted.append(user.id)
                     if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none:
                         await Demobot.add_reaction(msg, '✅')
                         await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                prop.voted.append(user.id)
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
