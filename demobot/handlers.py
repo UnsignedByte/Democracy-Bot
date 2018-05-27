@@ -158,6 +158,14 @@ async def newuser(Demobot, user):
     await utilities.save(None, None, None, overrideperms=True)
 
 
+def rep_number(server):
+    out = 0
+    for member in server.members:
+        if nested_get(server.id, 'roles', 'representative') in member.roles:
+            out += 1
+    return out
+
+
 async def on_reaction_add(Demobot, reaction, user):
     if user.bot:
         return

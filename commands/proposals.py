@@ -5,16 +5,7 @@ from commands.utilities import save
 from discord import Embed
 
 
-def rep_number(server):
-    out = 0
-    for member in server.members:
-        if nested_get(server.id, 'roles', 'representative') in member.roles:
-            out += 1
-    return out
-
-
 async def propose(Demobot, msg, reg):
-    print(rep_number(msg.server))
     if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
         aliases = {
             "rule": "rule",
