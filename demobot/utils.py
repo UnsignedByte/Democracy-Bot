@@ -118,8 +118,9 @@ class Votes:
 
 
 class Proposal:
-    def __init__(self, msg, title):
+    def __init__(self, msg, title, content):
         self.msg = msg
         self.votes = Votes()
         self.voted = []
         self.title = title
+        self.content = content
