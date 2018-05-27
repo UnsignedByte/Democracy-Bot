@@ -27,6 +27,7 @@ async def save(Demobot, msg, reg, overrideperms=False):
         await send_embed(Demobot, msg, em)
         return False
 
+
 async def getData(Demobot, msg, reg):
     dat = pformat(get_data()[0])
     a_l = 0
@@ -43,3 +44,4 @@ async def getData(Demobot, msg, reg):
 
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
+#add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
