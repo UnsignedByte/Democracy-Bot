@@ -7,7 +7,7 @@ async def imprison(Demobot, user):
     gotten = nested_get(user.server.id, "prisoners", user.id)
     if not gotten:
         gotten = 12
-    gotten *= 5
+    gotten = min(gotten*5, 86400)
     nested_set(gotten, user.server.id, "prisoners", user.id)
     await asyncio.sleep(gotten)
     unimprison(Demobot, user)
