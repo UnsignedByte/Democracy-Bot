@@ -108,3 +108,18 @@ def isInteger(s):
         return True
     except ValueError:
         return False
+
+
+class Votes:
+    def __init__(self):
+        self.up = 0
+        self.none = 0
+        self.down = 0
+
+
+class Proposal:
+    def __init__(self, msg, title):
+        self.msg = msg
+        self.votes = Votes()
+        self.voted = []
+        self.title = title

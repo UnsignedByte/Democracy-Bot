@@ -164,8 +164,21 @@ async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
         if nested_get(msg.server.id, "roles", "representative") in user.roles:
-            if msg.id in [x.id for x in nested_get(msg.server.id, "proposals", "messages")]:
-                print('finally')
+            ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+            if msg.id in ids:
+                prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+                if user in prop.voted:
+                    await Demobot.send_message(msg.channel, 'Don\'t vote twice, idiot. (temp message for dev purposes')
+                    await Demobot.remove_reaction(msg, reaction.emoji, user)
+                else:
+                    prop.voted.append(user)
+                    if reaction.emoji == '👍':
+                        prop.votes.up += 1
+                    elif reaction.emoji == '👎':
+                        prop.votes.down += 1
+                    elif reaction.emoji == '➖':
+                        prop.votes.none += 1
+
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
             await Demobot.send_message(msg.channel, 'YOU AINT A REP ps the enforcing.imprison is broke')
@@ -177,4 +190,17 @@ async def on_reaction_add(Demobot, reaction, user):
 
 
 async def on_reaction_delete(Demobot, reaction, user):
-    print("OOF!")
+    if user.bot:
+        return
+    msg = reaction.message
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
+        ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+        if msg.id in ids:
+            prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+            prop.voted.remove(user)
+            if reaction.emoji == '👍':
+                prop.votes.up -= 1
+            elif reaction.emoji == '👎':
+                prop.votes.down -= 1
+            elif reaction.emoji == '➖':
+                prop.votes.none -= 1

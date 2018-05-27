@@ -33,8 +33,8 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "➖")
-        nested_append(newm, msg.server.id, "proposals", "messages")
-        print(newm.id)
+        propobj = Proposal(newm, reg.group("title"))
+        nested_append(propobj, msg.server.id, "proposals", "messages")
         await save(None, None, None, overrideperms=True)
 
 add_message_handler(
