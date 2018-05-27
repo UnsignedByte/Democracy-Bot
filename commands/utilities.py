@@ -28,8 +28,18 @@ async def save(Demobot, msg, reg, overrideperms=False):
         return False
 
 async def getData(Demobot, msg, reg):
-    pprint(get_data()[0])
-    await Demobot.send_message(msg.channel, '```python\n'+pformat(get_data()[0])+'```')
+    dat = pformat(get_data()[0])
+    a_l = 0
+    a_s = '```'
+    for a in dat.splitlines():
+        if a_l+len(a)+1 <= 1994:
+            a_l+=len(a)+1
+            a_s+='\n'+a
+        else:
+            await Demobot.send_message(msg.channel, a_s+'```')
+            a_l = len(a)+1
+            a_s = '```\n'+a
+    await Demobot.send_message(msg.channel, a_s+'```')
 
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')

@@ -9,20 +9,19 @@ async def role(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
     if perms.manage_server:
         aliases = {
-        'rep':'representative',
-        'representative':'representative',
-        'leader':'leader',
-        'president':'leader',
-        'pres':'leader',
-        'judge':'judge',
-        'enforcer':'enforcer',
-        'enf':'enforcer',
-        'prisoner':'prisoner',
-        'criminal':'prisoner',
-        'default':'citizen',
-        'citizen':'citizen'
+            'rep':'representative',
+            'representative':'representative',
+            'leader':'leader',
+            'president':'leader',
+            'pres':'leader',
+            'judge':'judge',
+            'enforcer':'enforcer',
+            'enf':'enforcer',
+            'prisoner':'prisoner',
+            'criminal':'prisoner',
+            'default':'citizen',
+            'citizen':'citizen'
         }
-        print(msg.content)
         if reg.group('name') not in aliases:
             return
         if reg.group('role') is not '@everyone':
@@ -40,25 +39,27 @@ async def channel(Demobot, msg, reg):
     perms = msg.channel.permissions_for(msg.author)
     if perms.manage_server:
         aliases = {
-        'announcements':'announcements',
-        'announcement':'announcements',
-        'elections':'elections',
-        'proposals':'proposals',
-        'prop':'proposals',
-        'amendments':'amendments',
-        'amendment':'amendments',
-        'amend':'amendments',
-        'complaint':'complaints',
-        'complaints':'complaints',
-        'proposals-discussion':'proposals-discussion',
-        'proposal discussion':'proposals-discussion',
-        'prop discussion':'proposals-discussion',
-        'rules':'rules',
-        'rule':'rules',
-        'law':'rules',
-        'laws':'rules',
-        'passed proposals':'rules',
-        'election':'elections'
+            'announcements':'announcements',
+            'announcement':'announcements',
+            'elections':'elections',
+            'proposals':'proposals',
+            'prop':'proposals',
+            'amendments':'amendments',
+            'amendment':'amendments',
+            'amend':'amendments',
+            'complaint':'complaints',
+            'complaints':'complaints',
+            'proposals-discussion':'proposals-discussion',
+            'proposal discussion':'proposals-discussion',
+            'prop discussion':'proposals-discussion',
+            'rules':'rules',
+            'rule':'rules',
+            'law':'rules',
+            'laws':'rules',
+            'passed proposals':'rules',
+            'enforcer todo':'enf-todo',
+            'todo':'enf-todo',
+            'election':'elections'
         }
         if reg.group('name') not in aliases:
             return
