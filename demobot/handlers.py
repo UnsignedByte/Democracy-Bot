@@ -144,6 +144,9 @@ async def minutely_check(Demobot):
 
 async def member_update(Demobot, before, after):
     #nested_set(None, after.server.id, "members")
+    roles = nested_get(after.server.id, 'roles')
+    for a in after.roles:
+
 async def newuser(Demobot, user):
     oldusr = nested_get(user.server.id, "members", user.id)
     await Demobot.add_roles(user, *oldusr.roles)
