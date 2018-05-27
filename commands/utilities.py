@@ -33,4 +33,3 @@ async def getData(Demobot, msg, reg):
 
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
-add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')

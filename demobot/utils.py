@@ -76,7 +76,6 @@ def nickname(usr, srv):
         return usr.name
     return n
 
-
 @asyncio.coroutine
 def send_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=None):
     if not usr:

@@ -1,7 +1,6 @@
 from random import randint
 import os
 import pickle
-from demobot.utils import *
 from datetime import date
 from shutil import copyfile
 import pytz
@@ -75,6 +74,7 @@ print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
 from commands import *
+from demobot.utils import *
 import discord
 print("Command Initialization Finished")
 
@@ -142,9 +142,8 @@ async def minutely_check(Demobot):
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
 
-
 async def member_update(Demobot, before, after):
-    nested_set(after, after.server.id, "members", after.id)
+    #nested_set(None, after.server.id, "members")
 async def newuser(Demobot, user):
     oldusr = nested_get(user.server.id, "members", user.id)
     await Demobot.add_roles(user, *oldusr.roles)
