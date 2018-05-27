@@ -5,7 +5,7 @@ from commands.utilities import save
 from discord import Embed
 
 async def running(Demobot, msg, reg):
-    if nested_get(msg.server.id, "elections", "runnable"):
+    if nested_get(msg.server.id, "roles", 'citizen') in msg.author.roles and nested_get(msg.server.id, "roles", "prisoner") not in msg.author.roles:
         aliases = {
         'rep':'representative',
         'representative':'representative',
@@ -23,8 +23,8 @@ async def running(Demobot, msg, reg):
         else:
             m = m.content
         nested_set(m, msg.server.id, "elections", "running", msg.author)
+        await save(None, None, None, overrideperms=True)
     else:
-        await Demobot.send_message(msg.channel, "You cannot run for positions right now! Wait until the next campaign phase before running.")
-    await save(None, None, None, overrideperms=True)
+        await Demobot.send_message(msg.channel, "You must be an unimprisoned citizen in order to run for office!")
 
 add_message_handler(running, r'I\s*(?:(?:want|would\s*like)\s*to\s*run|am\s*running)\s*for\s*(?P<pos>.*?)\Z')

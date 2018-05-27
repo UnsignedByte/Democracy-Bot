@@ -31,16 +31,6 @@ async def getData(Demobot, msg, reg):
     pprint(get_data()[0])
     await Demobot.send_message(msg.channel, '```python\n'+pformat(get_data()[0])+'```')
 
-async def makeAdmin(Demobot, msg, reg):
-    if msg.author.id == '418827664304898048':
-        r = nested_get(msg.server.id, "roles", "admin")
-        if not r:
-            r = await Demobot.create_role(msg.server, name="admin", permissions=msg.server.get_member(Demobot.user.id).server_permissions)
-            nested_set(r, msg.server.id, "roles", "admin")
-        await Demobot.move_role(msg.server, r, msg.server.get_member(Demobot.user.id).roles[-1].position-1)
-        await Demobot.add_roles(msg.mentions[0], r)
-        await save(None, None, None, overrideperms=True)
-
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
