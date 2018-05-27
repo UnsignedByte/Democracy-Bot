@@ -154,15 +154,62 @@ async def member_update(Demobot, before, after):
 async def newuser(Demobot, user):
     if user in nested_get(user.server.id. "members", "citizen"):
         await Demobot.add_roles(user, )
+
+
+def rep_number(server):
+    out = 0
+    for member in server.members:
+        if nested_get(server.id, 'roles', 'representative') in member.roles:
+            out += 1
+    return out
+
+
 async def on_reaction_add(Demobot, reaction, user):
+    if user.bot:
+        return
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
-        if nested_get(msg.server.id, "roles", "representative") in msg.author.roles:
-            if msg in nested_get(msg.server.id, "proposals", "messages"):
-                pass
+        if nested_get(msg.server.id, "roles", "representative") in user.roles:
+            ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+            if msg.id in ids:
+                prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+                if reaction.emoji == '👍':
+                    prop.votes.up += 1
+                elif reaction.emoji == '👎':
+                    prop.votes.down += 1
+                elif reaction.emoji == '➖':
+                    prop.votes.none += 1
+                if user.id in prop.voted:
+                    await Demobot.remove_reaction(msg, reaction.emoji, user)
+                    await Demobot.send_message(msg.channel, 'dev message: don\'t vote twice, idiot')
+                else:
+                    prop.voted.append(user.id)
+                    if prop.votes.up * 2 > rep_number(msg.server) - prop.votes.none:
+                        await Demobot.add_reaction(msg, '✅')
+                        await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+
         else:
-            await enforcing.imprison(Demobot, msg.author)
+            await Demobot.remove_reaction(msg, reaction.emoji, user)
+            await Demobot.send_message(msg.channel, 'dev message: you ain\'t a rep')
+            # the below line throws a huge error, pls fix
+            # await enforcing.imprison(Demobot, msg.author)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
+
+
 async def on_reaction_delete(Demobot, reaction, user):
-    print("OOF!")
+    if user.bot:
+        return
+    msg = reaction.message
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
+        ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+        if msg.id in ids:
+            prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+            if user.id in prop.voted:
+                prop.voted.remove(user.id)
+            if reaction.emoji == '👍':
+                prop.votes.up -= 1
+            elif reaction.emoji == '👎':
+                prop.votes.down -= 1
+            elif reaction.emoji == '➖':
+                prop.votes.none -= 1

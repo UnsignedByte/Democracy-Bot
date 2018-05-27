@@ -5,12 +5,12 @@ from commands.utilities import save
 from discord import Embed
 
 async def propose(Demobot, msg, reg):
-    if nested_get(msg.server.id, "roles", "representative") in msg.author.roles and msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
         aliases = {
-        "rule": "rule",
-        "law": "rule",
-        "mod": "mod",
-        "moderation": "mod"
+            "rule": "rule",
+            "law": "rule",
+            "mod": "mod",
+            "moderation": "mod"
         }
         if reg.group("type"):
             if reg.group("type") not in aliases:
@@ -24,7 +24,10 @@ async def propose(Demobot, msg, reg):
             title = "Untitled Proposal"
         else:
             title = title.title()
-        newm = await Demobot.send_message(propchan, '%s %s Proposal:\n\n**%s**\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention, type, title, msg.id, reg.group("content")))
+        newm = await Demobot.send_message(
+            propchan,
+            '%s %s Proposal:\n\n**%s**\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
+                                                         type, title, msg.id, reg.group("content")))
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         propobj = Proposal(newm, reg.group("title"), reg.group('content'))
