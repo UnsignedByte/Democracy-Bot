@@ -175,22 +175,23 @@ async def on_reaction_add(Demobot, reaction, user):
             ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
             if msg.id in ids:
                 prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
-                if user in prop.voted:
-                    await Demobot.send_message(msg.channel, 'Don\'t vote twice, idiot. (temp message for dev purposes')
+                if reaction.emoji == '👍':
+                    prop.votes.up += 1
+                elif reaction.emoji == '👎':
+                    prop.votes.down += 1
+                elif reaction.emoji == '➖':
+                    prop.votes.none += 1
+                if user.id in prop.voted:
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
+                    await Demobot.send_message(msg.channel, 'dev message: don\'t vote twice, idiot')
                 else:
-                    prop.voted.append(user)
-                    if reaction.emoji == '👍':
-                        prop.votes.up += 1
-                    elif reaction.emoji == '👎':
-                        prop.votes.down += 1
-                    elif reaction.emoji == '➖':
-                        prop.votes.none += 1
+                    prop.voted.append(user.id)
+                    if prop.votes.up * 2 > rep_number(msg.server) - prop.votes.none:
+                        await Demobot.add_reaction(msg, '✅')
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(msg.channel, 'YOU AINT A REP ps the enforcing.imprison is broke')
-            print('u aint rep')
+            await Demobot.send_message(msg.channel, 'dev message: you ain\'t a rep')
             # the below line throws a huge error, pls fix
             # await enforcing.imprison(Demobot, msg.author)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
@@ -205,7 +206,8 @@ async def on_reaction_delete(Demobot, reaction, user):
         ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
         if msg.id in ids:
             prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
-            prop.voted.remove(user)
+            if user.id in prop.voted:
+                prop.voted.remove(user.id)
             if reaction.emoji == '👍':
                 prop.votes.up -= 1
             elif reaction.emoji == '👎':
