@@ -187,8 +187,12 @@ async def on_reaction_add(Demobot, reaction, user):
                 else:
                     prop.voted.append(user.id)
                     if prop.votes.up * 2 > rep_number(msg.server) - prop.votes.none:
-                        await Demobot.add_reaction(msg, '✅')
-                        await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                        nested_remove(prop, msg.server.id, 'proposals', 'messages')
+                        if prop.tt == 'rule':
+                            await Demobot.add_reaction(msg, '✅')
+                            await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                        else:
+                            await Demobot.add_reaction(msg, '✔')
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
