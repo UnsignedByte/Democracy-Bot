@@ -21,26 +21,35 @@ class DemocracyClient(discord.Client):
             propchan = demobot.handlers.nested_get(a, "channels", "proposals")
             if propchan:
                 for j in deepcopy(demobot.handlers.nested_get(a, "proposals", "messages")):
-                    t = j.edited_timestamp
-                    t = t if t else j.timestamp
-                    if (datetime.datetime.utcnow()-t).total_seconds() > 1:
-                        demobot.handlers.nested_remove(j, a, "proposals", "messages", func=lambda x,y:x.id == y.id)
+                    t = j.msg.edited_timestamp
+                    t = t if t else j.msg.timestamp
+                    if (datetime.datetime.utcnow() - t).total_seconds() > 1:
+                        demobot.handlers.nested_remove(j, a, "proposals", "messages",
+                                                       func=lambda x, y: x.msg.id == y.msg.id)
                     else:
                         self.messages.append(j)
-        await self.change_presence(game=discord.Game(name='The Democracy', url='https://github.com/UnsignedByte/Democracy-Bot', type=3))
+        await self.change_presence(game=discord.Game(name='Nichodon\'s Tester', type=3))
         await asyncio.gather(demobot.handlers.elections_timed(self), demobot.handlers.minutely_check(self))
+
     async def on_message(self, message):
         await demobot.handlers.on_message(self, message)
+
     async def on_message_edit(self, before, after):
         await demobot.handlers.on_message(self, after)
+
     async def on_member_update(self, before, after):
         await demobot.handlers.member_update(self, before, after)
+
     async def on_member_join(self, member):
         await demobot.handlers.newuser(self, member)
+
     async def on_reaction_add(self, reaction, user):
         await demobot.handlers.on_reaction_add(self, reaction, user)
+
     async def on_reaction_remove(self, reaction, user):
         await demobot.handlers.on_reaction_delete(self, reaction, user)
+
+
 Demobot = DemocracyClient()
 
 
