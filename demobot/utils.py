@@ -122,7 +122,7 @@ class Proposal:
         self.msg = msg
         self.votes = Votes()
         self.voted = []
-        self.type = type
+        self.tt = type
         self.title = title
         self.content = content
     def __eq__(self, a):
