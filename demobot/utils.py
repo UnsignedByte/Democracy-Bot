@@ -127,5 +127,3 @@ class Proposal:
         self.content = content
     def __eq__(self, a):
         return self.msg == a.msg
-    def __ne__(self, a):
-        return not self.__eq__(a)

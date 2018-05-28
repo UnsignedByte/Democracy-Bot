@@ -183,22 +183,21 @@ async def on_reaction_add(Demobot, reaction, user):
                     prop.votes.none += 1
                 if user.id in prop.voted:
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
-                    await Demobot.send_message(msg.channel, 'dev message: don\'t vote twice, idiot')
+                    await Demobot.send_message(user, 'You already voted! Don\'t vote twice.)
                 else:
-                    prop.voted.append(user.id)
-                    if prop.votes.up * 2 > rep_number(msg.server) - prop.votes.none:
+                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none:
                         nested_remove(prop, msg.server.id, 'proposals', 'messages')
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
                         else:
                             await Demobot.add_reaction(msg, '✔')
+                prop.voted.append(user.id)
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(msg.channel, 'dev message: you ain\'t a rep')
-            # the below line throws a huge error, pls fix
-            await enforcing.imprison(Demobot, msg.author)
+            await Demobot.send_message(user, 'You aren\'t a representative! As such, you have been imprisoned for illegally voting.')
+            await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
 
