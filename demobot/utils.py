@@ -118,11 +118,13 @@ class Votes:
 
 
 class Proposal:
-    def __init__(self, msg, type, content):
+    def __init__(self, msg, tt, content, author):
         self.msg = msg
         self.votes = Votes()
         self.voted = []
-        self.tt = type
+        self.tt = tt
         self.content = content
+        self.author = author
+
     def __eq__(self, a):
         return self.msg == a.msg

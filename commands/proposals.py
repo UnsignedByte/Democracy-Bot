@@ -1,8 +1,17 @@
-import asyncio
 from demobot.utils import *
-from demobot.handlers import add_message_handler, nested_get, nested_append, nested_set
+from demobot.handlers import add_message_handler, nested_get, nested_set, nested_pop
 from commands.utilities import save
-from discord import Embed
+
+
+async def cancel(Demobot, msg, reg):
+    if isInteger(reg.group('num')) and int(reg.group('num')) in nested_get(msg.server.id, 'proposals').keys():
+        prop = nested_get(msg.server.id, 'proposals', int(reg.group('num')))
+        if not prop.author == msg.author:
+            await Demobot.send_message(msg.channel, 'You didn\'t create that prop!')
+            return
+        await Demobot.delete_message(prop.msg)
+        nested_pop(int(reg.group('num')), msg.server.id, 'proposals')
+
 
 async def propose(Demobot, msg, reg):
     if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
@@ -30,8 +39,12 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, type, reg.group('content'))
-        nested_append(propobj, msg.server.id, "proposals", "messages")
+        propobj = Proposal(newm, type, reg.group('content'), msg.author)
+        for i in range(10000):
+            if not nested_get(msg.server.id, 'proposals', i):
+                nested_set(propobj, msg.server.id, "proposals", i)
+                break
         await save(None, None, None, overrideperms=True)
 
 add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\n)*?)\Z')
+add_message_handler(cancel, r'\s*cancel\s*(?P<num>.*?)\Z')
