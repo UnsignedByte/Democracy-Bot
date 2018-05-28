@@ -30,8 +30,11 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, type, reg.group('content'))
-        nested_append(propobj, msg.server.id, "proposals", "messages")
+        propobj = Proposal(newm, type, reg.group('content'), msg.author)
+        for i in range(10000):
+            if not nested_get(msg.server.id, 'proposals', i):
+                nested_set(propobj, msg.server.id, "proposals", i)
+                break
         await save(None, None, None, overrideperms=True)
 
 add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\n)*?)\Z')

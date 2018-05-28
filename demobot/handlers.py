@@ -175,9 +175,9 @@ async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
         if nested_get(msg.server.id, "roles", "representative") in user.roles:
-            ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+            ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
             if msg.id in ids:
-                prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+                prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
                 if reaction.emoji == '👍':
                     prop.votes.up += 1
                 elif reaction.emoji == '👎':
@@ -190,7 +190,7 @@ async def on_reaction_add(Demobot, reaction, user):
                 else:
                     if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) \
                             - prop.votes.none and prop.votes.up > 0:
-                        nested_remove(prop, msg.server.id, 'proposals', 'messages')
+                        nested_remove(prop, msg.server.id, 'proposals', ids.index(msg.id))
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
@@ -199,7 +199,7 @@ async def on_reaction_add(Demobot, reaction, user):
                 prop.voted.append(user.id)
                 if len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
                     if prop.votes.up <= prop.votes.down:
-                        nested_remove(prop, msg.server.id, 'proposals', 'messages')
+                        nested_remove(prop, msg.server.id, 'proposals', ids.index(msg.id))
                         await Demobot.add_reaction(msg, '❌')
 
         else:
