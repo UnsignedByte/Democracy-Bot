@@ -5,7 +5,6 @@ from demobot.handlers import add_message_handler, get_data, nested_set, nested_g
 from discord import Embed, Permissions
 from pprint import pformat, pprint
 
-
 async def save(Demobot, msg, reg, overrideperms=False):
     if overrideperms or msg.author.id == "418827664304898048":
         if not overrideperms:
@@ -27,20 +26,20 @@ async def save(Demobot, msg, reg, overrideperms=False):
         await send_embed(Demobot, msg, em)
         return False
 
-
 async def getData(Demobot, msg, reg):
-    dat = pformat(get_data()[0])
-    a_l = 0
-    a_s = '```xml'
-    for a in dat.splitlines():
-        if a_l+len(a)+1 <= 1991:
-            a_l+=len(a)+1
-            a_s+='\n'+a
-        else:
-            await Demobot.send_message(msg.channel, a_s+'```')
-            a_l = len(a)+1
-            a_s = '```xml\n'+a
-    await Demobot.send_message(msg.channel, a_s+'```')
+    if msg.author.id == (await get_owner(Demobot)).id:
+        dat = pformat(get_data()[0])
+        a_l = 0
+        a_s = '```xml'
+        for a in dat.splitlines():
+            if a_l+len(a)+1 <= 1991:
+                a_l+=len(a)+1
+                a_s+='\n'+a
+            else:
+                await Demobot.send_message(msg.channel, a_s+'```')
+                a_l = len(a)+1
+                a_s = '```xml\n'+a
+        await Demobot.send_message(msg.channel, a_s+'```')
 
 async def delete_data(Demobot, msg, reg):
     if msg.author.id == (await get_owner(Demobot)).id:
