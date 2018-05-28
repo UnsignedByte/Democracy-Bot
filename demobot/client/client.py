@@ -30,6 +30,7 @@ class DemocracyClient(discord.Client):
                     else:
                         self.messages.append(j.msg)'''
             demobot.handlers.server_data[a]['proposals'] = {}
+        print('Proposals Cleared')
         await self.change_presence(game=discord.Game(name='The Democracy', type=3))
         await asyncio.gather(demobot.handlers.elections_timed(self), demobot.handlers.minutely_check(self))
     async def on_message(self, message):

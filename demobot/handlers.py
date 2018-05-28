@@ -77,6 +77,10 @@ def nested_remove(value, *keys, **kwargs):
         print(v)
 
 
+def nested_pop(key, *keys):
+    nested_get(*keys).pop(key)
+
+
 print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
@@ -190,7 +194,7 @@ async def on_reaction_add(Demobot, reaction, user):
                 else:
                     if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) \
                             - prop.votes.none and prop.votes.up > 0:
-                        nested_remove(prop, msg.server.id, 'proposals', ids.index(msg.id))
+                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
@@ -199,7 +203,7 @@ async def on_reaction_add(Demobot, reaction, user):
                 prop.voted.append(user.id)
                 if len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
                     if prop.votes.up <= prop.votes.down:
-                        nested_remove(prop, msg.server.id, 'proposals', ids.index(msg.id))
+                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
                         await Demobot.add_reaction(msg, '❌')
 
         else:
