@@ -45,6 +45,9 @@ def nested_set(value, *keys):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
+def nested_pop(*keys):
+    nested_get(*keys[:-1]).pop(keys[-1], None)
+
 def nested_get(*keys):
     dic = server_data
     for key in keys:
@@ -183,7 +186,7 @@ async def on_reaction_add(Demobot, reaction, user):
                     prop.votes.none += 1
                 if user.id in prop.voted:
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
-                    await Demobot.send_message(user, 'You already voted! Don\'t vote twice.)
+                    await Demobot.send_message(user, 'You already voted! Don\'t vote twice.')
                 else:
                     if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none:
                         nested_remove(prop, msg.server.id, 'proposals', 'messages')
