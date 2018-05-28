@@ -23,20 +23,15 @@ async def propose(Demobot, msg, reg):
         else:
             type = "rule"
         propchan = nested_get(msg.server.id, "channels", "proposals")
-        title = reg.group("title")
-        if not title:
-            title = "Untitled Proposal"
-        else:
-            title = title.title()
         newm = await Demobot.send_message(
             propchan,
-            '%s %s Proposal:\n\n**%s**\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
-                                                         type, title, msg.id, reg.group("content")))
+            '%s %s Proposal:\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
+                                                         type, msg.id, reg.group("content")))
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, type, title, reg.group('content'))
+        propobj = Proposal(newm, type, reg.group('content'))
         nested_append(propobj, msg.server.id, "proposals", "messages")
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?:\*\*(?P<title>.*?)\*\*)?\s*(?P<content>(?:.|\n)*?)\Z')
+add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\n)*?)\Z')
