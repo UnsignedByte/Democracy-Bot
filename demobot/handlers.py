@@ -73,6 +73,8 @@ def nested_remove(value, *keys, **kwargs):
                     break
     except ValueError:
         return
+    except AttributeError:
+        print(v)
 
 
 print("Handler initialized")
@@ -166,6 +168,7 @@ async def newuser(Demobot, user):
         roles_to_add.append(nested_get(user.server.id, "roles", "prisoner"))
     await Demobot.add_roles(user, *roles_to_add)
 
+
 async def on_reaction_add(Demobot, reaction, user):
     if user.bot:
         return
@@ -183,9 +186,10 @@ async def on_reaction_add(Demobot, reaction, user):
                     prop.votes.none += 1
                 if user.id in prop.voted:
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
-                    await Demobot.send_message(user, 'You already voted! Don\'t vote twice.)
+                    await Demobot.send_message(user, 'Don\'t vote twice.')
                 else:
-                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none:
+                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) \
+                            - prop.votes.none and prop.votes.up > 0:
                         nested_remove(prop, msg.server.id, 'proposals', 'messages')
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
@@ -193,10 +197,14 @@ async def on_reaction_add(Demobot, reaction, user):
                         else:
                             await Demobot.add_reaction(msg, '✔')
                 prop.voted.append(user.id)
+                if len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
+                    if prop.votes.up <= prop.votes.down:
+                        nested_remove(prop, msg.server.id, 'proposals', 'messages')
+                        await Demobot.add_reaction(msg, '❌')
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(user, 'You aren\'t a representative! As such, you have been imprisoned for illegally voting.')
+            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a rep.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
