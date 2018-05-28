@@ -4,13 +4,14 @@ from commands.utilities import save
 
 
 async def cancel(Demobot, msg, reg):
-    if isInteger(reg.group('num')) and int(reg.group('num')) in nested_get(msg.server.id, 'proposals').keys():
-        prop = nested_get(msg.server.id, 'proposals', int(reg.group('num')))
+    if reg.group('num') in nested_get(msg.server.id, 'proposals').keys():
+        prop = nested_get(msg.server.id, 'proposals', reg.group('num'))
         if not prop.author == msg.author:
             await Demobot.send_message(msg.channel, 'You didn\'t create that prop!')
             return
-        await Demobot.delete_message(prop.msg)
-        nested_pop(int(reg.group('num')), msg.server.id, 'proposals')
+        await Demobot.edit_message(prop.msg, '%s %s Proposal:\nId:%s\n\n%s\n\n*(Canceled)*' % (nested_get(msg.server.id, "roles", "representative").mention, prop.tt, prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'))
+        await Demobot.clear_reactions(prop.msg)
+        nested_pop(reg.group('num'), msg.server.id, 'proposals')
 
 
 async def propose(Demobot, msg, reg):
@@ -32,19 +33,17 @@ async def propose(Demobot, msg, reg):
         else:
             type = "rule"
         propchan = nested_get(msg.server.id, "channels", "proposals")
-        newm = await Demobot.send_message(
-            propchan,
-            '%s %s Proposal:\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
-                                                         type, msg.id, reg.group("content")))
+        newm = await Demobot.send_message(propchan, 'Proposal:')
+        newm = await Demobot.edit_message(
+            newm,
+            '%s %s Proposal:\nId: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention, type, newm.id, reg.group("content")))
+
+        propobj = Proposal(newm, type, reg.group('content'), msg.author)
+        nested_set(propobj, msg.server.id, 'proposals', newm.id)
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, type, reg.group('content'), msg.author)
-        for i in range(10000):
-            if not nested_get(msg.server.id, 'proposals', i):
-                nested_set(propobj, msg.server.id, "proposals", i)
-                break
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\n)*?)\Z')
-add_message_handler(cancel, r'\s*cancel\s*(?P<num>.*?)\Z')
+add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\s)*?)\Z')
+add_message_handler(cancel, r'\s*cancel\s*prop\s*(?P<num>[0-9]*)\Z')

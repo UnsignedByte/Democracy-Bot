@@ -11,5 +11,6 @@ async def delete_data(Demobot, msg, reg):
             nested_pop(*keys)
         elif isinstance(nested_get(*keys[:-1]), list):
             nested_remove(keys[-1], *keys[:-1])
+        await save(None, None, None, overrideperms=True)
 
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')

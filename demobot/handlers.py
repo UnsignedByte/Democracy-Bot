@@ -80,10 +80,6 @@ def nested_remove(value, *keys, **kwargs):
         print(v)
 
 
-def nested_pop(key, *keys):
-    nested_get(*keys).pop(key)
-
-
 print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
@@ -182,9 +178,8 @@ async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
         if nested_get(msg.server.id, "roles", "representative") in user.roles:
-            ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
-            if msg.id in ids:
-                prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
+            if msg.id in nested_get(msg.server.id, 'proposals'):
+                prop = nested_get(msg.server.id, "proposals", msg.id)
                 if reaction.emoji == '👍':
                     prop.votes.up += 1
                 elif reaction.emoji == '👎':
@@ -192,26 +187,32 @@ async def on_reaction_add(Demobot, reaction, user):
                 elif reaction.emoji == '🤷':
                     prop.votes.none += 1
                 if user.id in prop.voted:
+                    prop.voted.append(user.id)
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
                     await Demobot.send_message(user, 'You already voted! Don\'t vote twice.')
                 else:
-                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) \
-                            - prop.votes.none and prop.votes.up > 0:
-                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
+                    prop.voted.append(user.id)
+                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none and prop.votes.up > 0:
+                        nested_pop(msg.server.id, 'proposals', msg.id)
+                        await Demobot.clear_reactions(msg)
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                        elif prop.tt == 'mod':
+                            await Demobot.add_reaction(msg, '✔')
+                            nm = await Demobot.send_message(nested_get(msg.server.id, 'channels', 'enf-todo'), prop.content)
+                            nm = await Demobot.add_reaction(msg, '✔')
                         else:
                             await Demobot.add_reaction(msg, '✔')
-                prop.voted.append(user.id)
-                if len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
-                    if prop.votes.up <= prop.votes.down:
-                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
-                        await Demobot.add_reaction(msg, '❌')
+                    elif len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
+                        if prop.votes.up <= prop.votes.down:
+                            nested_pop(msg.server.id, 'proposals', msg.id)
+                            await Demobot.clear_reactions(msg)
+                            await Demobot.add_reaction(msg, '❌')
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a rep.')
+            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
@@ -221,15 +222,13 @@ async def on_reaction_delete(Demobot, reaction, user):
     if user.bot:
         return
     msg = reaction.message
-    if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
-        ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
-        if msg.id in ids:
-            prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
-            if user.id in prop.voted:
-                prop.voted.remove(user.id)
-            if reaction.emoji == '👍':
-                prop.votes.up -= 1
-            elif reaction.emoji == '👎':
-                prop.votes.down -= 1
-            elif reaction.emoji == '🤷':
-                prop.votes.none -= 1
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and msg.id in nested_get(msg.server.id, 'proposals'):
+        prop = nested_get(msg.server.id, "proposals", msg.id)
+        if user.id in prop.voted:
+            prop.voted.remove(user.id)
+        if reaction.emoji == '👍':
+            prop.votes.up -= 1
+        elif reaction.emoji == '👎':
+            prop.votes.down -= 1
+        elif reaction.emoji == '🤷':
+            prop.votes.none -= 1
