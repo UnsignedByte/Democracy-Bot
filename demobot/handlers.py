@@ -215,9 +215,9 @@ async def on_reaction_delete(Demobot, reaction, user):
         return
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
-        ids = [x.msg.id for x in nested_get(msg.server.id, "proposals", "messages")]
+        ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
         if msg.id in ids:
-            prop = nested_get(msg.server.id, "proposals", "messages")[ids.index(msg.id)]
+            prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
             if user.id in prop.voted:
                 prop.voted.remove(user.id)
             if reaction.emoji == '👍':

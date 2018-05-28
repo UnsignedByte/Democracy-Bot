@@ -18,15 +18,17 @@ logger.addHandler(handler)
 class DemocracyClient(discord.Client):
     async def on_ready(self):
         for a in demobot.handlers.server_data:
-            propchan = demobot.handlers.nested_get(a, "channels", "proposals")
+            '''propchan = demobot.handlers.nested_get(a, "channels", "proposals")
             if propchan:
-                for j in deepcopy(demobot.handlers.nested_get(a, "proposals", "messages")):
+                for j in deepcopy(
+                        [demobot.handlers.nested_get(a, "proposals", x)
+                         for x in demobot.handlers.nested_get(a, "proposals")]):
                     t = j.msg.edited_timestamp
                     t = t if t else j.msg.timestamp
                     if (datetime.datetime.utcnow() - t).total_seconds() > 86400:
-                        demobot.handlers.nested_remove(j, a, "proposals", "messages")
+                        demobot.handlers.nested_remove(j, a, "proposals")
                     else:
-                        self.messages.append(j.msg)
+                        self.messages.append(j.msg)'''
             demobot.handlers.server_data[a]['proposals'] = {}
         await self.change_presence(game=discord.Game(name='The Democracy', type=3))
         await asyncio.gather(demobot.handlers.elections_timed(self), demobot.handlers.minutely_check(self))
