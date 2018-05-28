@@ -11,8 +11,7 @@ async def cancel(Demobot, msg, reg):
             return
         await Demobot.edit_message(prop.msg, '%s %s Proposal:\nId:%s\n\n%s\n\n*(Canceled)*' % (nested_get(msg.server.id, "roles", "representative").mention, prop.tt, prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'))
         await Demobot.clear_reactions(prop.msg)
-        nested_pop(reg.group('num'), msg.server.id, 'proposals')
-
+        nested_pop(msg.server.id, 'proposals', reg.group('num'))
 
 async def propose(Demobot, msg, reg):
     if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
