@@ -31,15 +31,15 @@ async def save(Demobot, msg, reg, overrideperms=False):
 async def getData(Demobot, msg, reg):
     dat = pformat(get_data()[0])
     a_l = 0
-    a_s = '```'
+    a_s = '```xml'
     for a in dat.splitlines():
-        if a_l+len(a)+1 <= 1994:
+        if a_l+len(a)+1 <= 1991:
             a_l+=len(a)+1
             a_s+='\n'+a
         else:
             await Demobot.send_message(msg.channel, a_s+'```')
             a_l = len(a)+1
-            a_s = '```\n'+a
+            a_s = '```xml\n'+a
     await Demobot.send_message(msg.channel, a_s+'```')
 
 add_message_handler(save, r'save\Z')
