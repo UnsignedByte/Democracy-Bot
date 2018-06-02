@@ -4,6 +4,7 @@ import pickle
 from datetime import date
 from shutil import copyfile
 import pytz
+from copy import deepcopy
 
 print("Begin Handler Initialization")
 
@@ -149,6 +150,14 @@ async def elections_timed(Demobot):
 
 async def minutely_check(Demobot):
     while True:
+        for a in server_data:
+            propchan = nested_get(a, "channels", "proposals")
+            if propchan:
+                for j in deepcopy(list(nested_get(a, 'messages', 'proposals').values())):
+                    t = j.msg.edited_timestamp
+                    t = t if t else j.msg.timestamp
+                    if (datetime.datetime.utcnow() - t).total_seconds() > 86400:
+                        nested_pop(a, 'messages', "proposals", j.msg.id)
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
 
@@ -178,8 +187,8 @@ async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
         if nested_get(msg.server.id, "roles", "representative") in user.roles:
-            if msg.id in nested_get(msg.server.id, 'proposals'):
-                prop = nested_get(msg.server.id, "proposals", msg.id)
+            if msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
+                prop = nested_get(msg.server.id, 'messages', "proposals", msg.id)
                 if reaction.emoji == '👍':
                     prop.votes.up += 1
                 elif reaction.emoji == '👎':
@@ -193,20 +202,21 @@ async def on_reaction_add(Demobot, reaction, user):
                 else:
                     prop.voted.append(user.id)
                     if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none and prop.votes.up > 0:
-                        nested_pop(msg.server.id, 'proposals', msg.id)
+                        nested_pop(msg.server.id, 'messages', 'proposals', msg.id)
                         await Demobot.clear_reactions(msg)
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
                         elif prop.tt == 'mod':
                             await Demobot.add_reaction(msg, '✔')
-                            nm = await Demobot.send_message(nested_get(msg.server.id, 'channels', 'enf-todo'), prop.content)
-                            nm = await Demobot.add_reaction(msg, '✔')
+                            nm = await Demobot.send_message(nested_get(msg.server.id, 'channels', 'enf-todo'), '%s TODO:\n\n%s\n\nWhen complete, have an enforcer react with a ✔.' % (nested_get(msg.server.id, 'roles', 'enforcer').mention, prop.content))
+                            await Demobot.add_reaction(nm, '✔')
+                            nested_set(nm, msg.server.id, 'messages', 'proposals', nm.id)
                         else:
                             await Demobot.add_reaction(msg, '✔')
                     elif len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
                         if prop.votes.up <= prop.votes.down:
-                            nested_pop(msg.server.id, 'proposals', msg.id)
+                            nested_pop(msg.server.id, 'messages', 'proposals', msg.id)
                             await Demobot.clear_reactions(msg)
                             await Demobot.add_reaction(msg, '❌')
 
@@ -222,8 +232,8 @@ async def on_reaction_delete(Demobot, reaction, user):
     if user.bot:
         return
     msg = reaction.message
-    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and msg.id in nested_get(msg.server.id, 'proposals'):
-        prop = nested_get(msg.server.id, "proposals", msg.id)
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
+        prop = nested_get(msg.server.id, 'messages', "proposals", msg.id)
         if user.id in prop.voted:
             prop.voted.remove(user.id)
         if reaction.emoji == '👍':

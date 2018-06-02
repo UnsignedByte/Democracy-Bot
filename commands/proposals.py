@@ -4,14 +4,14 @@ from commands.utilities import save
 
 
 async def cancel(Demobot, msg, reg):
-    if reg.group('num') in nested_get(msg.server.id, 'proposals').keys():
-        prop = nested_get(msg.server.id, 'proposals', reg.group('num'))
+    if reg.group('num') in nested_get(msg.server.id, 'messages', 'proposals').keys():
+        prop = nested_get(msg.server.id, 'messages', 'proposals', reg.group('num'))
         if not prop.author == msg.author:
             await Demobot.send_message(msg.channel, 'You didn\'t create that prop!')
             return
         await Demobot.edit_message(prop.msg, '%s %s Proposal:\nId:%s\n\n%s\n\n*(Canceled)*' % (nested_get(msg.server.id, "roles", "representative").mention, prop.tt, prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'))
         await Demobot.clear_reactions(prop.msg)
-        nested_pop(msg.server.id, 'proposals', reg.group('num'))
+        nested_pop(msg.server.id, 'messages', 'proposals', reg.group('num'))
 
 async def propose(Demobot, msg, reg):
     if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
@@ -31,14 +31,14 @@ async def propose(Demobot, msg, reg):
             type = aliases[reg.group("type").lower()]
         else:
             type = "rule"
-        propchan = nested_get(msg.server.id, "channels", "proposals")
+        propchan = nested_get(msg.server.id, "channels", 'proposals')
         newm = await Demobot.send_message(propchan, 'Proposal:')
         newm = await Demobot.edit_message(
             newm,
             '%s %s Proposal:\nId: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention, type, newm.id, reg.group("content")))
 
         propobj = Proposal(newm, type, reg.group('content'), msg.author)
-        nested_set(propobj, msg.server.id, 'proposals', newm.id)
+        nested_set(propobj, msg.server.id, 'messages', 'proposals', newm.id)
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")

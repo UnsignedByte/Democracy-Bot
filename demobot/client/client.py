@@ -20,13 +20,8 @@ class DemocracyClient(discord.Client):
         for a in demobot.handlers.server_data:
             propchan = demobot.handlers.nested_get(a, "channels", "proposals")
             if propchan:
-                for j in deepcopy(list(demobot.handlers.nested_get(a, 'proposals').values())):
-                    t = j.msg.edited_timestamp
-                    t = t if t else j.msg.timestamp
-                    if (datetime.datetime.utcnow() - t).total_seconds() > 86400:
-                        demobot.handlers.nested_pop(a, "proposals", j.msg.id)
-                    else:
-                        self.messages.append(j.msg)
+                for j in deepcopy(list(demobot.handlers.nested_get(a, 'messages', 'proposals').values())):
+                    self.messages.append(j.msg)
         await self.change_presence(game=discord.Game(name='The Democracy', type=3))
         await asyncio.gather(demobot.handlers.elections_timed(self), demobot.handlers.minutely_check(self))
     async def on_message(self, message):
