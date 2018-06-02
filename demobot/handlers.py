@@ -97,11 +97,12 @@ from datetime import datetime, timedelta
 async def on_message(Demobot, msg):
     if not msg.author.bot:
         try:
-            if msg.channel.is_private:
-                await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
             for a in message_handlers:
                 reg = re.compile(a, re.I).match(msg.content)
                 if reg:
+                    if msg.channel.is_private:
+                        await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
+                        return
                     await message_handlers[a](Demobot, msg, reg)
                     break
         except IndexError:
@@ -151,7 +152,7 @@ async def minutely_check(Demobot):
                 for j in deepcopy(list(nested_get(a, 'messages', 'proposals').values())):
                     t = j.msg.edited_timestamp
                     t = t if t else j.msg.timestamp
-                    if (datetime.datetime.utcnow() - t).total_seconds() > 86400:
+                    if (datetime.utcnow() - t).total_seconds() > 86400:
                         nested_pop(a, 'messages', "proposals", j.msg.id)
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
