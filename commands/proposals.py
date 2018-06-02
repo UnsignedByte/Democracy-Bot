@@ -1,6 +1,7 @@
 from demobot.utils import *
 from demobot.handlers import add_message_handler, nested_get, nested_set, nested_pop
 from commands.utilities import save
+from discord import Embed
 
 
 async def cancel(Demobot, msg, reg):
@@ -18,10 +19,10 @@ async def propose(Demobot, msg, reg):
         aliases = {
             "rule": "rule",
             "law": "rule",
-            "mod": "mod",
-            "moderation": "mod",
-            "amend":"amend",
-            "amendment":"amend",
+            "mod": "moderation",
+            "moderation": "moderation",
+            "amend":"amendment",
+            "amendment":"amendment",
             "override":"override",
             "rewrite":"override"
         }
@@ -33,6 +34,7 @@ async def propose(Demobot, msg, reg):
             type = "rule"
         propchan = nested_get(msg.server.id, "channels", 'proposals')
         newm = await Demobot.send_message(propchan, 'Proposal:')
+        em = Embed(title=type.title()+'proposal')
         newm = await Demobot.edit_message(
             newm,
             '%s %s Proposal:\nId: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention, type, newm.id, reg.group("content")))

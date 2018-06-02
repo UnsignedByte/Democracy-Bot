@@ -96,11 +96,6 @@ from datetime import datetime, timedelta
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
-        if msg.author.status == discord.Status.offline:
-            await Demobot.delete_message(msg)
-            outm = await Demobot.send_message(msg.channel, "Hey! You shouldn't be speaking while invisible.")
-            await asyncio.sleep(1)
-            await Demobot.delete_message(outm)
         try:
             if msg.channel.is_private:
                 await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
@@ -137,16 +132,16 @@ async def elections_timed(Demobot):
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You may now run for positions in government!\nTo do so, type `I am running for (position)` (remove the parentheses).\nElections will start later today at "+(nextelection+timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-            nested_set(electionmsg, a, "elections", "runnable")
+                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You may now run for positions in government!\nTo do so, type `I am running for (position)` (remove the parentheses).\nElections will start later today at "+(nextelection+timedelta(hours=6)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
+            nested_set(True, a, "elections", "runnable")
         await asyncio.sleep(21600)
         nested_set(None, a, "elections", "runnable")
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last until tomorrow at "+(nextelection+timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
+                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last for another 48 hours..")
             nested_set(electionmsg, a, "elections", "election")
-        await asyncio.sleep(86400)
+        await asyncio.sleep(86400*2)
 
 async def minutely_check(Demobot):
     while True:
