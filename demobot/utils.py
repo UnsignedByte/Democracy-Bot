@@ -108,7 +108,13 @@ def isInteger(s):
     except ValueError:
         return False
 
-
+class Candidate:
+    def __init__(self, usr, slogan):
+        self.usr = usr
+        self.slogan = slogan
+        self.msg = None
+    def __eq__(self, a):
+        return self.usr == a.usr
 
 class Votes:
     def __init__(self):
