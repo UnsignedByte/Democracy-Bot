@@ -76,30 +76,30 @@ def nickname(usr, srv):
         return usr.name
     return n
 
-@asyncio.coroutine
-def send_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=None):
+async def send_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=None):
     if not usr:
         usr = Discow.user
     txt = "Created by "+nickname(usr, msg.server)+" on "+convertTime(time, msg)+"."
     embed.set_footer(text=txt, icon_url=(usr.avatar_url if usr.avatar_url else usr.default_avatar_url))
     try:
-        m = yield from Discow.send_message(msg.channel, embed=embed)
+        m = await Discow.send_message(msg.channel, embed=embed)
         return m
     except Forbidden:
-        yield from Discow.send_message(msg.channel,
+        await Discow.send_message(msg.channel,
                                        "**Missing Permissions**\nDiscow is missing permissions to perform this task.")
         return None
 
 
-@asyncio.coroutine
-def edit_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=None):
+async def edit_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=None):
     if not usr:
         usr = Discow.user
     txt = "Edited by "+nickname(usr, msg.server)+" on "+convertTime(time, msg)+"."
     embed.set_footer(text=txt, icon_url=(usr.avatar_url if usr.avatar_url else usr.default_avatar_url))
-    m = yield from Discow.edit_message(msg, embed=embed)
+    m = await Discow.edit_message(msg, embed=embed)
     return m
 
+async def get_owner(Demobot):
+    return (await Demobot.application_info()).owner
 
 def isInteger(s):
     try:
@@ -108,7 +108,13 @@ def isInteger(s):
     except ValueError:
         return False
 
-
+class Candidate:
+    def __init__(self, usr, slogan):
+        self.usr = usr
+        self.slogan = slogan
+        self.msg = None
+    def __eq__(self, a):
+        return self.usr == a.usr
 
 class Votes:
     def __init__(self):

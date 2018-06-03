@@ -1,10 +1,9 @@
 import asyncio
 import pickle
 from demobot.utils import *
-from demobot.handlers import add_message_handler, get_data, nested_set, nested_get
+from demobot.handlers import add_message_handler, get_data, nested_set, nested_get, nested_pop
 from discord import Embed, Permissions
 from pprint import pformat, pprint
-
 
 async def save(Demobot, msg, reg, overrideperms=False):
     if overrideperms or msg.author.id == "418827664304898048":
@@ -27,21 +26,40 @@ async def save(Demobot, msg, reg, overrideperms=False):
         await send_embed(Demobot, msg, em)
         return False
 
-
 async def getData(Demobot, msg, reg):
-    dat = pformat(get_data()[0])
-    a_l = 0
-    a_s = '```xml'
-    for a in dat.splitlines():
-        if a_l+len(a)+1 <= 1991:
-            a_l+=len(a)+1
-            a_s+='\n'+a
-        else:
-            await Demobot.send_message(msg.channel, a_s+'```')
-            a_l = len(a)+1
-            a_s = '```xml\n'+a
-    await Demobot.send_message(msg.channel, a_s+'```')
+    if msg.author.id == (await get_owner(Demobot)).id:
+        dat = pformat(get_data()[0])
+        a_l = 0
+        a_s = '```xml'
+        for a in dat.splitlines():
+            if a_l+len(a)+1 <= 1991:
+                a_l+=len(a)+1
+                a_s+='\n'+a
+            else:
+                await Demobot.send_message(msg.channel, a_s+'```')
+                a_l = len(a)+1
+                a_s = '```xml\n'+a
+        await Demobot.send_message(msg.channel, a_s+'```')
+
+async def delete_data(Demobot, msg, reg):
+    if msg.author.id == (await get_owner(Demobot)).id:
+        keys = [msg.server.id] + reg.group('path').split()
+        if isinstance(nested_get(*keys[:-1]), dict):
+            nested_pop(*keys)
+        elif isinstance(nested_get(*keys[:-1]), list):
+            nested_remove(keys[-1], *keys[:-1])
+        await save(None, None, None, overrideperms=True)
+
+async def global_delete_data(Demobot, msg, reg):
+    if msg.author.id == (await get_owner(Demobot)).id:
+        keys = reg.group('path').split()
+        if isinstance(nested_get(*keys[:-1]), dict):
+            nested_pop(*keys)
+        elif isinstance(nested_get(*keys[:-1]), list):
+            nested_remove(keys[-1], *keys[:-1])
+        await save(None, None, None, overrideperms=True)
 
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
-#add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
+add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
+add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
