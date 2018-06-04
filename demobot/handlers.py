@@ -5,6 +5,7 @@ from datetime import date
 from shutil import copyfile
 import pytz
 import pprint
+from copy import deepcopy
 
 print("Begin Handler Initialization")
 
@@ -47,6 +48,15 @@ def nested_set(value, *keys):
     dic[keys[-1]] = value
 
 
+def nested_pop(*keys):
+    nested_get(*keys[:-1]).pop(keys[-1], None)
+
+
+#we made two different pops, oops :/
+def alt_pop(key, *keys):
+    nested_get(*keys).pop(key)
+
+
 def nested_get(*keys):
     dic = server_data
     for key in keys:
@@ -81,10 +91,6 @@ def nested_remove(value, *keys, **kwargs):
         print(v)
 
 
-def nested_pop(key, *keys):
-    nested_get(*keys).pop(key)
-
-
 print("Handler initialized")
 print("Begin Command Initialization")
 # Add modules here
@@ -108,11 +114,12 @@ async def on_message(Demobot, msg):
             await asyncio.sleep(1)
             await Demobot.delete_message(outm)
         try:
-            if msg.channel.is_private:
-                await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels.")
             for a in message_handlers:
                 reg = re.compile(a, re.I).match(msg.content)
                 if reg:
+                    if msg.channel.is_private:
+                        await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
+                        return
                     await message_handlers[a](Demobot, msg, reg)
                     break
             #There used to be a whole lot of catches here but they were extremely annoying because they did NOT display the trace. "Invalid inputs" is a stupid error message that gives no information.
@@ -172,6 +179,14 @@ async def elections_timed(Demobot):
 
 async def minutely_check(Demobot):
     while True:
+        for a in server_data:
+            propchan = nested_get(a, "channels", "proposals")
+            if propchan:
+                for j in deepcopy(list(nested_get(a, 'messages', 'proposals').values())):
+                    t = j.msg.edited_timestamp
+                    t = t if t else j.msg.timestamp
+                    if (datetime.utcnow() - t).total_seconds() > 86400:
+                        nested_pop(a, 'messages', "proposals", j.msg.id)
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
 
@@ -201,9 +216,8 @@ async def on_reaction_add(Demobot, reaction, user):
     msg = reaction.message
     if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
         if nested_get(msg.server.id, "roles", "representative") in user.roles:
-            ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
-            if msg.id in ids:
-                prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
+            if msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
+                prop = nested_get(msg.server.id, 'messages', "proposals", msg.id)
                 if reaction.emoji == '👍':
                     prop.votes.up += 1
                 elif reaction.emoji == '👎':
@@ -211,26 +225,33 @@ async def on_reaction_add(Demobot, reaction, user):
                 elif reaction.emoji == '🤷':
                     prop.votes.none += 1
                 if user.id in prop.voted:
+                    prop.voted.append(user.id)
                     await Demobot.remove_reaction(msg, reaction.emoji, user)
-                    await Demobot.send_message(user, 'Don\'t vote twice.')
+                    await Demobot.send_message(user, 'You already voted! Don\'t vote twice.')
                 else:
-                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) \
-                            - prop.votes.none and prop.votes.up > 0:
-                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
+                    prop.voted.append(user.id)
+                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none and prop.votes.up > 0:
+                        nested_pop(msg.server.id, 'messages', 'proposals', msg.id)
+                        await Demobot.clear_reactions(msg)
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                        elif prop.tt == 'mod':
+                            await Demobot.add_reaction(msg, '✔')
+                            nm = await Demobot.send_message(nested_get(msg.server.id, 'channels', 'enf-todo'), '%s TODO:\n\n%s\n\nWhen complete, have an enforcer react with a ✔.' % (nested_get(msg.server.id, 'roles', 'enforcer').mention, prop.content))
+                            await Demobot.add_reaction(nm, '✔')
+                            nested_set(nm, msg.server.id, 'messages', 'proposals', nm.id)
                         else:
                             await Demobot.add_reaction(msg, '✔')
-                prop.voted.append(user.id)
-                if len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
-                    if prop.votes.up <= prop.votes.down:
-                        nested_pop(ids.index(msg.id), msg.server.id, 'proposals')
-                        await Demobot.add_reaction(msg, '❌')
+                    elif len(prop.voted) == len(nested_get(msg.server.id, 'members', 'representative')):
+                        if prop.votes.up <= prop.votes.down:
+                            nested_pop(msg.server.id, 'messages', 'proposals', msg.id)
+                            await Demobot.clear_reactions(msg)
+                            await Demobot.add_reaction(msg, '❌')
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a rep.')
+            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
         pass
@@ -240,15 +261,13 @@ async def on_reaction_delete(Demobot, reaction, user):
     if user.bot:
         return
     msg = reaction.message
-    if msg.channel == nested_get(msg.server.id, "channels", "proposals"):
-        ids = [nested_get(msg.server.id, "proposals", x).msg.id for x in nested_get(msg.server.id, "proposals")]
-        if msg.id in ids:
-            prop = nested_get(msg.server.id, "proposals", ids.index(msg.id))
-            if user.id in prop.voted:
-                prop.voted.remove(user.id)
-            if reaction.emoji == '👍':
-                prop.votes.up -= 1
-            elif reaction.emoji == '👎':
-                prop.votes.down -= 1
-            elif reaction.emoji == '🤷':
-                prop.votes.none -= 1
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
+        prop = nested_get(msg.server.id, 'messages', "proposals", msg.id)
+        if user.id in prop.voted:
+            prop.voted.remove(user.id)
+        if reaction.emoji == '👍':
+            prop.votes.up -= 1
+        elif reaction.emoji == '👎':
+            prop.votes.down -= 1
+        elif reaction.emoji == '🤷':
+            prop.votes.none -= 1

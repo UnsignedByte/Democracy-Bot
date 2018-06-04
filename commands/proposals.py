@@ -1,27 +1,29 @@
 from demobot.utils import *
 from demobot.handlers import add_message_handler, nested_get, nested_set, nested_pop
 from commands.utilities import save
+from discord import Embed
 
 
 async def cancel(Demobot, msg, reg):
-    if isInteger(reg.group('num')) and int(reg.group('num')) in nested_get(msg.server.id, 'proposals').keys():
-        prop = nested_get(msg.server.id, 'proposals', int(reg.group('num')))
+    if reg.group('num') in nested_get(msg.server.id, 'messages', 'proposals').keys():
+        prop = nested_get(msg.server.id, 'messages', 'proposals', reg.group('num'))
         if not prop.author == msg.author:
             await Demobot.send_message(msg.channel, 'You didn\'t create that prop!')
             return
-        await Demobot.delete_message(prop.msg)
-        nested_pop(int(reg.group('num')), msg.server.id, 'proposals')
-
+        em = Embed(title=prop.tt.title()+' Proposal', description='%s\n\n%s\n\n*(Canceled)*' % (prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'), colour=nested_get(msg.server.id, "roles", "representative").colour)
+        await Demobot.edit_message(prop.msg, nested_get(msg.server.id, "roles", "representative").mention, embed=em)
+        await Demobot.clear_reactions(prop.msg)
+        nested_pop(msg.server.id, 'messages', 'proposals', reg.group('num'))
 
 async def propose(Demobot, msg, reg):
-    if msg.channel == nested_get(msg.server.id, "channels", "proposals-discussion"):
+    if msg.channel == nested_get(msg.server.id, "channels", "politics"):
         aliases = {
             "rule": "rule",
             "law": "rule",
-            "mod": "mod",
-            "moderation": "mod",
-            "amend":"amend",
-            "amendment":"amend",
+            "mod": "moderation",
+            "moderation": "moderation",
+            "amend":"amendment",
+            "amendment":"amendment",
             "override":"override",
             "rewrite":"override"
         }
@@ -31,20 +33,18 @@ async def propose(Demobot, msg, reg):
             type = aliases[reg.group("type").lower()]
         else:
             type = "rule"
-        propchan = nested_get(msg.server.id, "channels", "proposals")
-        newm = await Demobot.send_message(
-            propchan,
-            '%s %s Proposal:\nID: %s\n\n%s' % (nested_get(msg.server.id, "roles", "representative").mention,
-                                                         type, msg.id, reg.group("content")))
+        propchan = nested_get(msg.server.id, "channels", 'proposals')
+        newm = await Demobot.send_message(propchan, '\u200D')
+        em = Embed(title=type.title()+' Proposal', description=('ID: %s\n\n%s' % (newm.id, reg.group("content"))), colour = nested_get(msg.server.id, "roles", "representative").colour)
+        newm = await Demobot.edit_message(
+            newm, nested_get(msg.server.id, "roles", "representative").mention, embed=em)
+
+        propobj = Proposal(newm, type, reg.group('content'), msg.author)
+        nested_set(propobj, msg.server.id, 'messages', 'proposals', newm.id)
         await Demobot.add_reaction(newm, "👍")
         await Demobot.add_reaction(newm, "👎")
         await Demobot.add_reaction(newm, "🤷")
-        propobj = Proposal(newm, type, reg.group('content'), msg.author)
-        for i in range(10000):
-            if not nested_get(msg.server.id, 'proposals', i):
-                nested_set(propobj, msg.server.id, "proposals", i)
-                break
         await save(None, None, None, overrideperms=True)
 
-add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\n)*?)\Z')
-add_message_handler(cancel, r'\s*cancel\s*(?P<num>.*?)\Z')
+add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\s)*?)\Z')
+add_message_handler(cancel, r'\s*cancel\s*prop\s*(?P<num>[0-9]*)\Z')
