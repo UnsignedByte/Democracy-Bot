@@ -1,6 +1,6 @@
 import asyncio
 from demobot.utils import *
-from demobot.handlers import add_message_handler, nested_get
+from demobot.handlers import add_message_handler, nested_get, nested_set
 from commands.utilities import save
 from discord import Embed
 

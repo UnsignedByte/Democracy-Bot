@@ -131,21 +131,38 @@ async def elections_timed(Demobot):
         await asyncio.sleep((nextelection-currt).total_seconds())
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You will be able to run for positions in government later today at "+(nextelection+timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-        await asyncio.sleep(43200)
+                await Demobot.send_message(chann,
+                                           citizen_m + "! You\'ll be able to run for office today at " + time + ".")
+        #await asyncio.sleep(43200)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You may now run for positions in government!\nTo do so, type `I am running for (position)` (remove the parentheses).\nElections will start later today at "+(nextelection+timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
+                electionmsg = await Demobot.send_message(
+                    chann, citizen_m + "! You're now able to run for office!\n" +
+                           "To run, type `I am running for <position>`.\n" + "Elections will start at " + time + ".")
             nested_set(electionmsg, a, "elections", "runnable")
-        await asyncio.sleep(21600)
-        nested_set(None, a, "elections", "runnable")
+        #await asyncio.sleep(21600)
+        #await asyncio.sleep(10)
+        #nested_set(None, a, "elections", "runnable")
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last until tomorrow at "+(nextelection+timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
+                electionmsg = await Demobot.send_message(
+                    chann, citizen_m + "! Elections have now started. They end in two days at " + time + ".")
             nested_set(electionmsg, a, "elections", "election")
+
+            next = nested_get(a, 'channels', 'elections')
+            if next:
+                le = nested_get(a, 'elections', 'leader')
+                for b in le:
+                    await Demobot.send_message(next, '**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b))
         await asyncio.sleep(86400)
 
 
