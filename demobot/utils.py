@@ -109,7 +109,6 @@ def isInteger(s):
         return False
 
 
-
 class Votes:
     def __init__(self):
         self.up = 0

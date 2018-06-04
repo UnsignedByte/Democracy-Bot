@@ -4,6 +4,7 @@ import pickle
 from datetime import date
 from shutil import copyfile
 import pytz
+import pprint
 
 print("Begin Handler Initialization")
 
@@ -45,11 +46,13 @@ def nested_set(value, *keys):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
+
 def nested_get(*keys):
     dic = server_data
     for key in keys:
         dic=dic.setdefault( key, {} )
     return dic
+
 
 def nested_append(value, *keys):
     v = nested_get(*keys)
@@ -57,6 +60,7 @@ def nested_append(value, *keys):
         v.append(value)
     else:
         nested_set([value], *keys)
+
 
 def nested_remove(value, *keys, **kwargs):
     kwargs['func'] = kwargs.get('func', None)
@@ -93,34 +97,30 @@ import asyncio
 import re
 from datetime import datetime, timedelta
 
+import traceback
+
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
-        if msg.author.status == discord.Status.offline:
+        if hasattr(msg.author, 'status') and msg.author.status == discord.Status.offline:
             await Demobot.delete_message(msg)
             outm = await Demobot.send_message(msg.channel, "Hey! You shouldn't be speaking while invisible.")
             await asyncio.sleep(1)
             await Demobot.delete_message(outm)
         try:
             if msg.channel.is_private:
-                await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels")
+                await Demobot.send_message(msg.channel, "Demobot doesn't work in private channels.")
             for a in message_handlers:
                 reg = re.compile(a, re.I).match(msg.content)
                 if reg:
                     await message_handlers[a](Demobot, msg, reg)
                     break
-        except IndexError:
-            em = discord.Embed(title="Missing Inputs", description="Not enough inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except (TypeError, ValueError):
-            em = discord.Embed(title="Invalid Inputs", description="Invalid inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except discord.Forbidden:
-            em = discord.Embed(title="Missing Permissions", description="Demobot is missing permissions to perform this task.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
+            #There used to be a whole lot of catches here but they were extremely annoying because they did NOT display the trace. "Invalid inputs" is a stupid error message that gives no information.
         except Exception as e:
-            em = discord.Embed(title="Unknown Error", description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
+            em = discord.Embed(title="Unknown Error",
+                               description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
             await send_embed(Demobot, msg, em)
+            traceback.print_tb(e.__traceback__)
 
 
 async def elections_timed(Demobot):
@@ -147,6 +147,7 @@ async def elections_timed(Demobot):
                 electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last until tomorrow at "+(nextelection+timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
             nested_set(electionmsg, a, "elections", "election")
         await asyncio.sleep(86400)
+
 
 async def minutely_check(Demobot):
     while True:

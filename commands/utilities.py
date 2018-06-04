@@ -15,6 +15,7 @@ async def save(Demobot, msg, reg, overrideperms=False):
         data = get_data()
         with open("data/settings.txt", "wb") as f:
             pickle.dump(data[0], f)
+        print('Save')
         if not overrideperms:
             em.description = "Complete!"
             msg = await edit_embed(Demobot, msg, embed=em)
