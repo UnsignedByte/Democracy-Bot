@@ -6,7 +6,9 @@ from discord import Embed
 
 
 async def running(Demobot, msg, reg):
-    if nested_get(msg.server.id, "roles", 'citizen') in msg.author.roles and nested_get(msg.server.id, "prisoners", msg.author.id) < 1500:
+    if nested_get(msg.server.id, "roles", 'citizen') in msg.author.roles and \
+            True:
+            #nested_get(msg.server.id, "prisoners", msg.author.id) < 1500:
         aliases = {
             'rep': 'representative',
             'representative': 'representative',

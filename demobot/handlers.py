@@ -124,9 +124,13 @@ async def on_message(Demobot, msg):
 
 
 async def elections_timed(Demobot):
+
+    # Making the election day not wednesday for dev purposes
+    test_diff = -4
+
     while True:
         currt = datetime.now(tz=pytz.utc)
-        nextelection = currt + timedelta( (2-currt.weekday()) % 7 + 1 )
+        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + test_diff)
         nextelection = nextelection.replace(hour=8, minute=0, second=0, microsecond=0)
         await asyncio.sleep((nextelection-currt).total_seconds())
         for a in server_data:
