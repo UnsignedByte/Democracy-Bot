@@ -1,7 +1,7 @@
 import asyncio
 import pickle
 from demobot.utils import *
-from demobot.handlers import add_message_handler, get_data, nested_set, nested_get, nested_pop
+from demobot.handlers import add_message_handler, get_data, nested_get, nested_pop, server_data
 from discord import Embed, Permissions
 from pprint import pformat, pprint
 
@@ -60,7 +60,16 @@ async def global_delete_data(Demobot, msg, reg):
             nested_remove(keys[-1], *keys[:-1])
         await save(None, None, None, overrideperms=True)
 
+
+async def find(Demobot, msg, reg):
+    if reg.group('key') == '*':
+        await Demobot.send_message(msg.channel, '`' + str(list(server_data[msg.server.id].keys())) + '`')
+        return
+    await Demobot.send_message(msg.channel, '```xml\n' + pformat(server_data[msg.server.id][reg.group('key')]) + '```')
+
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
+
+add_message_handler(find, r'sub (?P<key>.*)\Z')
