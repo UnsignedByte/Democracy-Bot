@@ -25,7 +25,7 @@ async def running(Demobot, msg, reg):
             m = "*No description given*"
         else:
             m = m.content
-        nested_set(m, msg.server.id, 'elections', aliases[reg.group('pos')], msg.author.id)
+        nested_set(Candidate(m, msg.author.id), msg.server.id, 'elections', aliases[reg.group('pos')], msg.author.id)
         await Demobot.send_message(msg.author, "Demobot actually does work in DM for candidacies! You are now running.")
         await save(None, None, None, overrideperms=True)
     else:

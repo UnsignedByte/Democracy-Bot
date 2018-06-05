@@ -127,3 +127,11 @@ class Proposal:
 
     def __eq__(self, a):
         return self.msg == a.msg
+
+
+class Candidate:
+    def __init__(self, desc, ii):
+        self.desc = desc
+        self.ii = ii
+        self.up = []
+        self.down = []
