@@ -4,6 +4,7 @@ import pickle
 from datetime import date
 from shutil import copyfile
 import pytz
+import pprint
 from copy import deepcopy
 
 print("Begin Handler Initialization")
@@ -46,8 +47,15 @@ def nested_set(value, *keys):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
+
 def nested_pop(*keys):
     nested_get(*keys[:-1]).pop(keys[-1], None)
+
+
+#we made two different pops, oops :/
+def alt_pop(key, *keys):
+    nested_get(*keys).pop(key)
+
 
 def nested_get(*keys):
     dic = server_data
@@ -55,12 +63,14 @@ def nested_get(*keys):
         dic=dic.setdefault( key, {} )
     return dic
 
+
 def nested_append(value, *keys):
     v = nested_get(*keys)
     if v:
         v.append(value)
     else:
         nested_set([value], *keys)
+
 
 def nested_remove(value, *keys, **kwargs):
     kwargs['func'] = kwargs.get('func', None)
@@ -93,9 +103,16 @@ import asyncio
 import re
 from datetime import datetime, timedelta
 
+import traceback
+
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
+        if hasattr(msg.author, 'status') and msg.author.status == discord.Status.offline:
+            await Demobot.delete_message(msg)
+            outm = await Demobot.send_message(msg.channel, "Hey! You shouldn't be speaking while invisible.")
+            await asyncio.sleep(1)
+            await Demobot.delete_message(outm)
         try:
             for a in message_handlers:
                 reg = re.compile(a, re.I).match(msg.content)
@@ -105,44 +122,60 @@ async def on_message(Demobot, msg):
                         return
                     await message_handlers[a](Demobot, msg, reg)
                     break
-        except IndexError:
-            em = discord.Embed(title="Missing Inputs", description="Not enough inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except (TypeError, ValueError):
-            em = discord.Embed(title="Invalid Inputs", description="Invalid inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except discord.Forbidden:
-            em = discord.Embed(title="Missing Permissions", description="Demobot is missing permissions to perform this task.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
+            #There used to be a whole lot of catches here but they were extremely annoying because they did NOT display the trace. "Invalid inputs" is a stupid error message that gives no information.
         except Exception as e:
-            em = discord.Embed(title="Unknown Error", description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
+            em = discord.Embed(title="Unknown Error",
+                               description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
             await send_embed(Demobot, msg, em)
+            traceback.print_tb(e.__traceback__)
 
 
 async def elections_timed(Demobot):
+
+    # Making the election day not wednesday for dev purposes
+    test_diff = -4
+
     while True:
         currt = datetime.now(tz=pytz.utc)
-        nextelection = currt + timedelta( (2-currt.weekday()) % 7 + 1 )
+        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + test_diff)
         nextelection = nextelection.replace(hour=8, minute=0, second=0, microsecond=0)
         await asyncio.sleep((nextelection-currt).total_seconds())
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You will be able to run for positions in government later today at "+(nextelection+timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-        await asyncio.sleep(43200)
+                await Demobot.send_message(chann,
+                                           citizen_m + "! You\'ll be able to run for office today at " + time + ".")
+        #await asyncio.sleep(43200)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You may now run for positions in government!\nTo do so, type `I am running for (position)` (remove the parentheses).\nElections will start later today at "+(nextelection+timedelta(hours=6)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-            nested_set(True, a, "elections", "runnable")
-        await asyncio.sleep(21600)
-        nested_set(None, a, "elections", "runnable")
+                electionmsg = await Demobot.send_message(
+                    chann, citizen_m + "! You're now able to run for office!\n" +
+                           "To run, type `I am running for <position>`.\n" + "Elections will start at " + time + ".")
+            nested_set(electionmsg, a, "elections", "runnable")
+        #await asyncio.sleep(21600)
+        #await asyncio.sleep(10)
+        #nested_set(None, a, "elections", "runnable")
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last for another 48 hours..")
+                electionmsg = await Demobot.send_message(
+                    chann, citizen_m + "! Elections have now started. They end in two days at " + time + ".")
             nested_set(electionmsg, a, "elections", "election")
-        await asyncio.sleep(86400*2)
+
+            next = nested_get(a, 'channels', 'elections')
+            if next:
+                le = nested_get(a, 'elections', 'leader')
+                for b in le:
+                    await Demobot.send_message(next, '**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b))
+        await asyncio.sleep(86400)
+
 
 async def minutely_check(Demobot):
     while True:
