@@ -170,9 +170,24 @@ async def elections_timed(Demobot):
 
             next = nested_get(a, 'channels', 'elections')
             if next:
+                nested_set({}, a, 'elections', 'msg')
                 le = nested_get(a, 'elections', 'leader')
                 for b in le:
-                    await Demobot.send_message(next, '**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b))
+                    c = await Demobot.send_message(
+                        next, '.\n\n**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b).desc)
+                    await Demobot.add_reaction(c, '👍')
+                    await Demobot.add_reaction(c, '👎')
+                    nested_set(nested_get(a, 'elections', 'leader', b).ii, a, 'elections', 'msg', c.id)
+                er = nested_get(a, 'elections', 'representative')
+                out = '.\n\n**Representative Candidates**\nYou must vote the generic vote!\n\n'
+                key = 127462
+                for b in er:
+                    out += chr(key) + ' ' + nested_get(a, 'elections', 'representative', b).desc + '\n'
+                    key += 1
+                c = await Demobot.send_message(next, out)
+                await Demobot.add_reaction(c, '🗳')
+                for d in range(127462, key):
+                    await Demobot.add_reaction(c, chr(d))
         await asyncio.sleep(86400)
 
 
@@ -253,7 +268,9 @@ async def on_reaction_add(Demobot, reaction, user):
             await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
-        pass
+        ii = nested_get(msg.server.id, 'elections', 'msg', msg.id)
+        if not ii == 'rep' and nested_get(msg.server.id, 'elections', 'leader', ii):
+            print(nested_get(msg.server.id, 'elections', 'leader', ii).desc)
 
 
 async def on_reaction_delete(Demobot, reaction, user):
