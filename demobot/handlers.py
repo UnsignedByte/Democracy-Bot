@@ -139,26 +139,10 @@ async def elections_timed(Demobot):
     while True:
         currt = datetime.now(tz=pytz.utc)
         nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (test_diff if dev else 0))
-        nextelection = nextelection.replace(hour=8, minute=0, second=0, microsecond=0)
-        await asyncio.sleep((nextelection-currt).total_seconds())
+        nextelection = nextelection.replace(hour=19, minute=0, second=0, microsecond=0)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
-            citizen_m = nested_get(a, "roles", "citizen").mention
-            time = (nextelection + timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
-            if chann:
-                await Demobot.send_message(chann,
-                                           citizen_m + "! You\'ll be able to run for office today at " + time + ".")
-        await asyncio.sleep(43200 if not dev else 1)
-        for a in server_data:
-            chann = nested_get(a, "channels", "announcements")
-            citizen_m = nested_get(a, "roles", "citizen").mention
-            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
-            if chann:
-                electionmsg = await Demobot.send_message(
-                    chann, citizen_m + "! You're now able to run for office!\n" +
-                           "To run, type `I am running for <position>`.\n" + "Elections will start at " + time + ".")
-            nested_set(electionmsg, a, "elections", "runnable")
-        await asyncio.sleep(21600 if not dev else 1)
+        await asyncio.sleep((nextelection-currt).total_seconds() if not dev else 1)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             citizen_m = nested_get(a, "roles", "citizen").mention
