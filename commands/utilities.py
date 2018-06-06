@@ -6,7 +6,7 @@ from discord import Embed, Permissions
 from pprint import pformat, pprint
 
 async def save(Demobot, msg, reg, overrideperms=False):
-    if overrideperms or msg.author.id == "418827664304898048":
+    if overrideperms or msg.author.id == "418827664304898048" or msg.author.id == '418921871333916683':
         if not overrideperms:
             em = Embed(title="Saving Data...", description="Saving...", colour=0xd32323)
             msg = await send_embed(Demobot, msg, em)
