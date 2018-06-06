@@ -137,14 +137,14 @@ async def elections_timed(Demobot):
 
     while True:
         currt = datetime.now(tz=pytz.utc)
-        nextelection = currt + timedelta((2 - currt.weekday()) % 7 - (1 if dev else 0))
-        nextelection = nextelection.replace(hour=19, minute=0, second=0, microsecond=0)
+        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (0 if dev else 1))
+        nextelection = nextelection.replace(hour=2, minute=0, second=0, microsecond=0)
         for a in server_data:
-        await asyncio.sleep((nextelection-currt).total_seconds() if not dev else 1)
+        await asyncio.sleep((nextelection - currt).total_seconds() if not dev else 1)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             citizen_m = nested_get(a, "roles", "citizen").mention
-            time = (nextelection + timedelta(hours=24)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
+            time = nextelection.astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
                 await Demobot.send_message(
                     chann, citizen_m + "! Elections have now started. They end in two days at " + time + ".")
@@ -182,7 +182,8 @@ async def elections_timed(Demobot):
                 # Do the following lines when elections end
                 # nested_set({}, a, 'elections')
                 # nested_set(set([]), a, 'elections', 'generic')
-        await asyncio.sleep(86400)
+        await asyncio.sleep(172800 if not dev else 10)
+        await asyncio.sleep(100000)
 
 
 async def minutely_check(Demobot):
@@ -266,6 +267,7 @@ async def on_reaction_add(Demobot, reaction, user):
             await Demobot.send_message(user, 'You have been imprisoned because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
+        await Demobot.remove_reaction(msg, reaction.emoji, user)
         if msg.id not in nested_get(msg.server.id, 'elections', 'msg'):
             return
         ii = nested_get(msg.server.id, 'elections', 'msg', msg.id)
@@ -303,7 +305,6 @@ async def on_reaction_add(Demobot, reaction, user):
                 key += 1
                 count += str(len(nested_get(msg.server.id, 'elections', 'representative', b).up)) + ' - '
             await Demobot.edit_message(msg, new_content=out + count[:-3] + '**')
-        await Demobot.remove_reaction(msg, reaction.emoji, user)
 
 
 async def on_reaction_delete(Demobot, reaction, user):
