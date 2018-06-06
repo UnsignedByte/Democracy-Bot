@@ -133,5 +133,5 @@ class Candidate:
     def __init__(self, desc, ii):
         self.desc = desc
         self.ii = ii
-        self.up = []
-        self.down = []
+        self.up = set([])
+        self.down = set([])
