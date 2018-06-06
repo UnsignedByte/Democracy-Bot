@@ -134,46 +134,56 @@ async def elections_timed(Demobot):
 
     dev = True
     # Making the election day not wednesday for dev purposes
-    test_diff = -4
 
     while True:
         currt = datetime.now(tz=pytz.utc)
-        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (test_diff if dev else 0))
-        nextelection = nextelection.replace(hour=19, minute=0, second=0, microsecond=0)
+        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (0 if dev else 1))
+        nextelection = nextelection.replace(hour=2, minute=0, second=0, microsecond=0)
         for a in server_data:
-            chann = nested_get(a, "channels", "announcements")
-        await asyncio.sleep((nextelection-currt).total_seconds() if not dev else 1)
+        await asyncio.sleep((nextelection - currt).total_seconds() if not dev else 1)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             citizen_m = nested_get(a, "roles", "citizen").mention
-            time = (nextelection + timedelta(hours=18)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
+            time = nextelection.astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                electionmsg = await Demobot.send_message(
+                await Demobot.send_message(
                     chann, citizen_m + "! Elections have now started. They end in two days at " + time + ".")
 
             next = nested_get(a, 'channels', 'elections')
             if next:
+                await Demobot.send_message(next, '```\n```\n\n**Elections Start Here**\n\n' +
+                                           'Leader: Candidate with the largest difference between up and down wins.\n' +
+                                           'Representative: Candidates with at least a third of the generic win.\n\n' +
+                                           'Click the reactions to toggle a vote. You can vote more than once.\n' +
+                                           '**Remember to vote the generic!**')
                 nested_set({}, a, 'elections', 'msg')
                 le = nested_get(a, 'elections', 'leader')
                 for b in le:
                     c = await Demobot.send_message(
                         next, '.\n\n**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b).desc +
-                              '\n\n👍 0   |   👎 0')
+                              '\n\nVotes: **0 - 0**')
                     await Demobot.add_reaction(c, '👍')
                     await Demobot.add_reaction(c, '👎')
                     nested_set(nested_get(a, 'elections', 'leader', b).ii, a, 'elections', 'msg', c.id)
                 er = nested_get(a, 'elections', 'representative')
                 out = '.\n\n**Representative Candidates**\nYou must vote the generic vote!\n\n'
                 key = 127462
+                count = ('\n\nVotes: **0 | ' + '0 - ' * len(er))[:-3] + '**'
                 for b in er:
                     out += chr(key) + ' ' + nested_get(a, 'elections', 'representative', b).desc + '\n'
+                    nested_set(nested_get(a, 'elections', 'representative', b).ii, a, 'elections', 'msg', key)
                     key += 1
-                c = await Demobot.send_message(next, out)
+                c = await Demobot.send_message(next, out + count)
                 await Demobot.add_reaction(c, '🗳')
                 for d in range(127462, key):
                     await Demobot.add_reaction(c, chr(d))
                 nested_set('rep', a, 'elections', 'msg', c.id)
-        await asyncio.sleep(86400)
+
+                # Do the following lines when elections end
+                # nested_set({}, a, 'elections')
+                # nested_set(set([]), a, 'elections', 'generic')
+        await asyncio.sleep(172800 if not dev else 10)
+        await asyncio.sleep(100000)
 
 
 async def minutely_check(Demobot):
@@ -257,6 +267,7 @@ async def on_reaction_add(Demobot, reaction, user):
             await Demobot.send_message(user, 'You have been imprisoned because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
+        await Demobot.remove_reaction(msg, reaction.emoji, user)
         if msg.id not in nested_get(msg.server.id, 'elections', 'msg'):
             return
         ii = nested_get(msg.server.id, 'elections', 'msg', msg.id)
@@ -272,11 +283,28 @@ async def on_reaction_add(Demobot, reaction, user):
                     c.down.discard(msg.author.id)
                 else:
                     c.down.add(msg.author.id)
-            await Demobot.edit_message(msg, new_content='.\n\n**Leader Candidate**\n' + c.desc + '\n\n👍 ' +
-                                                        str(len(c.up)) + '   |   👎 ' + str(len(c.down)))
+            await Demobot.edit_message(msg, new_content='.\n\n**Leader Candidate**\n' + c.desc + '\n\nVotes: **' +
+                                                        str(len(c.up)) + ' - ' + str(len(c.down)) + '**')
         elif ii == 'rep':
-            print(ord(reaction.emoji) - 127462)
-        await Demobot.remove_reaction(msg, reaction.emoji, user)
+            generic = nested_get(msg.server.id, 'elections', 'generic')
+            if reaction.emoji == '🗳':
+                generic.add(msg.author.id)
+            elif msg.author.id in generic:
+                thing = nested_get(msg.server.id, 'elections', 'msg', ord(reaction.emoji))
+                c = nested_get(msg.server.id, 'elections', 'representative', thing)
+                if msg.author.id in c.up:
+                    c.up.discard(msg.author.id)
+                else:
+                    c.up.add(msg.author.id)
+            er = nested_get(msg.server.id, 'elections', 'representative')
+            out = '.\n\n**Representative Candidates**\nYou must vote the generic vote!\n\n'
+            count = '\n\nVotes: **' + str(len(generic)) + ' | '
+            key = 127462
+            for b in er:
+                out += chr(key) + ' ' + nested_get(msg.server.id, 'elections', 'representative', b).desc + '\n'
+                key += 1
+                count += str(len(nested_get(msg.server.id, 'elections', 'representative', b).up)) + ' - '
+            await Demobot.edit_message(msg, new_content=out + count[:-3] + '**')
 
 
 async def on_reaction_delete(Demobot, reaction, user):
