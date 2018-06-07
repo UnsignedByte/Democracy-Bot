@@ -1,9 +1,6 @@
-from random import randint
 import os
 import pickle
-from datetime import date
 from shutil import copyfile
-import pytz
 import pprint
 from copy import deepcopy
 from discord.utils import find
@@ -39,7 +36,6 @@ def add_private_message_handler(handler, keyword):
 
 def get_data():
     return [server_data]
-# from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
 
 
 def nested_set(value, *keys):
@@ -53,7 +49,6 @@ def nested_pop(*keys):
     nested_get(*keys[:-1]).pop(keys[-1], None)
 
 
-#we made two different pops, oops :/
 def alt_pop(key, *keys):
     nested_get(*keys).pop(key)
 
@@ -89,7 +84,7 @@ def nested_remove(value, *keys, **kwargs):
     except ValueError:
         return
     except AttributeError:
-        print(v)
+        print('ATTRIBUTE ERROR')
 
 
 print("Handler initialized")
@@ -184,6 +179,9 @@ async def elections_timed(Demobot):
             chann = nested_get(a, 'channels', 'announcements')
             citizen_m = nested_get(a, "roles", "citizen").mention
 
+            for l in nested_get(a, 'members', 'leader'):
+                await Demobot.remove_roles(l, nested_get(a, 'roles', 'leader'))
+
             le = nested_get(a, 'elections', 'leader')
             winner = 1000
             user = None
@@ -192,16 +190,31 @@ async def elections_timed(Demobot):
                 if winner == 1000 or len(c.up) - len(c.down) > winner:
                     winner = len(c.up) - len(c.down)
                     user = find(lambda m: m.id == c.ii, Demobot.get_server(a).members)
-            print(user.name)
 
-            for l in nested_get(a, 'members', 'leader'):
-                await Demobot.remove_roles(l, nested_get(a, 'roles', 'leader'))
+            for l in nested_get(a, 'members', 'representative'):
+                await Demobot.remove_roles(l, nested_get(a, 'roles', 'representative'))
+
+            generic = len(nested_get(a, 'elections', 'generic'))
+            er = nested_get(a, 'elections', 'representative')
+            users = []
+            nested_pop(a, 'elections', 'representatives')
+            for b in er:
+                c = nested_get(a, 'elections', 'representative', b)
+                print(len([0, 0, 0]) / len([0, 0, 0, 0]))
+                if len(c.up) / generic >= 1 / 3:
+                    users.append(find(lambda m: m.id == c.ii, Demobot.get_server(a).members))
 
             await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
+
+            out = ''
+            for u in users:
+                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                out += u.mention + ', '
 
             if chann:
                 await Demobot.send_message(chann, citizen_m + "! Elections have now ended.")
                 await Demobot.send_message(chann, user.mention + " has been elected leader!")
+                await Demobot.send_message(chann, out[:-2] + " have been elected representative!")
 
             if not dev:
                 nested_set({}, a, 'elections')
