@@ -6,6 +6,7 @@ from shutil import copyfile
 import pytz
 import pprint
 from copy import deepcopy
+from discord.utils import find
 
 print("Begin Handler Initialization")
 
@@ -132,7 +133,7 @@ async def on_message(Demobot, msg):
 
 async def elections_timed(Demobot):
 
-    dev = True
+    dev = False
     # Making the election day not wednesday for dev purposes
 
     while True:
@@ -178,11 +179,33 @@ async def elections_timed(Demobot):
                 for d in range(127462, key):
                     await Demobot.add_reaction(c, chr(d))
                 nested_set('rep', a, 'elections', 'msg', c.id)
-
-                # Do the following lines when elections end
-                # nested_set({}, a, 'elections')
-                # nested_set(set([]), a, 'elections', 'generic')
         await asyncio.sleep(172800 if not dev else 10)
+        for a in server_data:
+            chann = nested_get(a, 'channels', 'announcements')
+            citizen_m = nested_get(a, "roles", "citizen").mention
+
+            le = nested_get(a, 'elections', 'leader')
+            winner = 1000
+            user = None
+            for b in le:
+                c = nested_get(a, 'elections', 'leader', b)
+                if winner == 1000 or len(c.up) - len(c.down) > winner:
+                    winner = len(c.up) - len(c.down)
+                    user = find(lambda m: m.id == c.ii, Demobot.get_server(a).members)
+            print(user.name)
+
+            for l in nested_get(a, 'members', 'leader'):
+                await Demobot.remove_roles(l, nested_get(a, 'roles', 'leader'))
+
+            await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
+
+            if chann:
+                await Demobot.send_message(chann, citizen_m + "! Elections have now ended.")
+                await Demobot.send_message(chann, user.mention + " has been elected leader!")
+
+            if not dev:
+                nested_set({}, a, 'elections')
+                nested_set(set([]), a, 'elections', 'generic')
         await asyncio.sleep(100000)
 
 
@@ -199,6 +222,7 @@ async def minutely_check(Demobot):
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
 
+
 async def member_update(Demobot, before, after):
     roles = nested_get(after.server.id, 'roles')
     for a in nested_get(after.server.id, 'members'):
@@ -209,6 +233,7 @@ async def member_update(Demobot, before, after):
         except ValueError:
             pass
     await utilities.save(None, None, None, overrideperms=True)
+
 
 async def newuser(Demobot, user):
     roles_to_add = []
