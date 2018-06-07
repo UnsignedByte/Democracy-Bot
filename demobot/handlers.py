@@ -1,9 +1,6 @@
-from random import randint
 import os
 import pickle
-from datetime import date
 from shutil import copyfile
-import pytz
 import pprint
 from copy import deepcopy
 from discord.utils import find
@@ -39,7 +36,6 @@ def add_private_message_handler(handler, keyword):
 
 def get_data():
     return [server_data]
-# from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
 
 
 def nested_set(value, *keys):
@@ -53,7 +49,6 @@ def nested_pop(*keys):
     nested_get(*keys[:-1]).pop(keys[-1], None)
 
 
-#we made two different pops, oops :/
 def alt_pop(key, *keys):
     nested_get(*keys).pop(key)
 
@@ -89,7 +84,7 @@ def nested_remove(value, *keys, **kwargs):
     except ValueError:
         return
     except AttributeError:
-        print(v)
+        print('ATTRIBUTE ERROR')
 
 
 print("Handler initialized")
