@@ -71,7 +71,7 @@ def nested_append(value, *keys):
 def nested_remove(value, *keys, **kwargs):
     kwargs['func'] = kwargs.get('func', None)
     v = nested_get(*keys)
-    if not v:
+    if not v or isinstance(v, discord.Member):
         return
     try:
         if not kwargs['func']:
@@ -83,8 +83,6 @@ def nested_remove(value, *keys, **kwargs):
                     break
     except ValueError:
         return
-    except AttributeError:
-        print('ATTRIBUTE ERROR')
 
 
 print("Handler initialized")
@@ -174,7 +172,7 @@ async def elections_timed(Demobot):
                 for d in range(127462, key):
                     await Demobot.add_reaction(c, chr(d))
                 nested_set('rep', a, 'elections', 'msg', c.id)
-        await asyncio.sleep(172800 if not dev else 10)
+        await asyncio.sleep(172800 if not dev else 1)
         for a in server_data:
             chann = nested_get(a, 'channels', 'announcements')
             citizen_m = nested_get(a, "roles", "citizen").mention
@@ -205,11 +203,13 @@ async def elections_timed(Demobot):
                     users.append(find(lambda m: m.id == c.ii, Demobot.get_server(a).members))
 
             await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
+            await Demobot.remove_roles(user, nested_get(a, 'roles', 'representative'))
 
             out = ''
             for u in users:
-                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
-                out += u.mention + ', '
+                if not u.id == user.id:
+                    await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                    out += u.mention + ', '
 
             if chann:
                 await Demobot.send_message(chann, citizen_m + "! Elections have now ended.")
