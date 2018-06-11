@@ -99,6 +99,7 @@ from datetime import datetime, timedelta
 
 import traceback
 
+from time import time
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
@@ -133,15 +134,14 @@ async def elections_timed(Demobot):
         currt = datetime.now(tz=pytz.utc)
         nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (0 if dev else 1))
         nextelection = nextelection.replace(hour=2, minute=0, second=0, microsecond=0)
-        for a in server_data:
         await asyncio.sleep((nextelection - currt).total_seconds() if not dev else 1)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
             citizen_m = nested_get(a, "roles", "citizen").mention
-            time = nextelection.astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
+            tim = nextelection.astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
                 await Demobot.send_message(
-                    chann, citizen_m + "! Elections have now started. They end in two days at " + time + ".")
+                    chann, citizen_m + "! Elections have now started. They end in two days at " + tim + ".")
 
             next = nested_get(a, 'channels', 'elections')
             if next:
@@ -198,28 +198,52 @@ async def elections_timed(Demobot):
             nested_pop(a, 'elections', 'representatives')
             for b in er:
                 c = nested_get(a, 'elections', 'representative', b)
-                print(len([0, 0, 0]) / len([0, 0, 0, 0]))
-                if len(c.up) / generic >= 1 / 3:
+                nested_set(Backup(time(), len(c.up) / generic), a, 'elections', 'backup', c.ii)
+                if len(c.up) / generic >= 1 / 3 and not c.ii == user.id:
                     users.append(find(lambda m: m.id == c.ii, Demobot.get_server(a).members))
 
-            await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
+            secondary = []
+            forbid = [user.id]
+            for b in range(max(0, 3 - len(users))):
+                thing = next_backup(a, forbid)
+                secondary.append(find(lambda m: m.id == thing, Demobot.get_server(a).members))
+                forbid.append(thing)
+
+
             await Demobot.remove_roles(user, nested_get(a, 'roles', 'representative'))
+            await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
 
             out = ''
             for u in users:
-                if not u.id == user.id:
-                    await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
-                    out += u.mention + ', '
+                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                out += u.mention + ', '
+
+            out = 'No one was elected representative.\n' \
+                if out == '' else out[:-2] + " have been elected representative!\n"
+            for u in secondary:
+                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                out += u.mention + ', '
 
             if chann:
                 await Demobot.send_message(chann, citizen_m + "! Elections have now ended.")
                 await Demobot.send_message(chann, user.mention + " has been elected leader!")
-                await Demobot.send_message(chann, out[:-2] + " have been elected representative!")
+                await Demobot.send_message(chann, out[:-2] + " have been made reps from the backup list.")
 
             if not dev:
                 nested_set({}, a, 'elections')
                 nested_set(set([]), a, 'elections', 'generic')
         await asyncio.sleep(100000)
+
+
+def next_backup(server, leader):
+    out = -1
+    rep = ''
+    backup = nested_get(server, 'elections', 'backup')
+    for a in backup:
+        if a not in leader and nested_get(server, 'elections', 'backup', a).score > out:
+            out = nested_get(server, 'elections', 'backup', a).score
+            rep = a
+    return rep
 
 
 async def minutely_check(Demobot):

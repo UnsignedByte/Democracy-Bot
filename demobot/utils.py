@@ -135,3 +135,9 @@ class Candidate:
         self.ii = ii
         self.up = set([])
         self.down = set([])
+
+
+class Backup:
+    def __init__(self, time, score):
+        self.time = time
+        self.score = score
