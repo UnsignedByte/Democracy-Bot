@@ -1,10 +1,9 @@
-from random import randint
 import os
 import pickle
-from datetime import date
 from shutil import copyfile
-import pytz
+import pprint
 from copy import deepcopy
+from discord.utils import find
 
 print("Begin Handler Initialization")
 
@@ -37,7 +36,6 @@ def add_private_message_handler(handler, keyword):
 
 def get_data():
     return [server_data]
-# from https://stackoverflow.com/questions/13687924/setting-a-value-in-a-nested-python-dictionary-given-a-list-of-indices-and-value
 
 
 def nested_set(value, *keys):
@@ -46,14 +44,21 @@ def nested_set(value, *keys):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
+
 def nested_pop(*keys):
     nested_get(*keys[:-1]).pop(keys[-1], None)
+
+
+def alt_pop(key, *keys):
+    nested_get(*keys).pop(key)
+
 
 def nested_get(*keys):
     dic = server_data
     for key in keys:
         dic=dic.setdefault( key, {} )
     return dic
+
 
 def nested_append(value, *keys):
     v = nested_get(*keys)
@@ -62,10 +67,11 @@ def nested_append(value, *keys):
     else:
         nested_set([value], *keys)
 
+
 def nested_remove(value, *keys, **kwargs):
     kwargs['func'] = kwargs.get('func', None)
     v = nested_get(*keys)
-    if not v:
+    if not v or isinstance(v, discord.Member):
         return
     try:
         if not kwargs['func']:
@@ -77,8 +83,6 @@ def nested_remove(value, *keys, **kwargs):
                     break
     except ValueError:
         return
-    except AttributeError:
-        print(v)
 
 
 print("Handler initialized")
@@ -93,9 +97,17 @@ import asyncio
 import re
 from datetime import datetime, timedelta
 
+import traceback
+
+from time import time
 
 async def on_message(Demobot, msg):
     if not msg.author.bot:
+        if hasattr(msg.author, 'status') and msg.author.status == discord.Status.offline:
+            await Demobot.delete_message(msg)
+            outm = await Demobot.send_message(msg.channel, "Hey! You shouldn't be speaking while invisible.")
+            await asyncio.sleep(1)
+            await Demobot.delete_message(outm)
         try:
             for a in message_handlers:
                 reg = re.compile(a, re.I).match(msg.content)
@@ -105,44 +117,134 @@ async def on_message(Demobot, msg):
                         return
                     await message_handlers[a](Demobot, msg, reg)
                     break
-        except IndexError:
-            em = discord.Embed(title="Missing Inputs", description="Not enough inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except (TypeError, ValueError):
-            em = discord.Embed(title="Invalid Inputs", description="Invalid inputs provided.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
-        except discord.Forbidden:
-            em = discord.Embed(title="Missing Permissions", description="Demobot is missing permissions to perform this task.", colour=0xd32323)
-            await send_embed(Demobot, msg, em)
+            #There used to be a whole lot of catches here but they were extremely annoying because they did NOT display the trace. "Invalid inputs" is a stupid error message that gives no information.
         except Exception as e:
-            em = discord.Embed(title="Unknown Error", description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
+            em = discord.Embed(title="Unknown Error",
+                               description="An unknown error occurred. Trace:\n%s" % e, colour=0xd32323)
             await send_embed(Demobot, msg, em)
+            traceback.print_tb(e.__traceback__)
 
 
 async def elections_timed(Demobot):
+
+    dev = False
+    # Making the election day not wednesday for dev purposes
+
     while True:
         currt = datetime.now(tz=pytz.utc)
-        nextelection = currt + timedelta( (2-currt.weekday()) % 7 + 1 )
-        nextelection = nextelection.replace(hour=8, minute=0, second=0, microsecond=0)
-        await asyncio.sleep((nextelection-currt).total_seconds())
+        nextelection = currt + timedelta((2 - currt.weekday()) % 7 + (0 if dev else 1))
+        nextelection = nextelection.replace(hour=2, minute=0, second=0, microsecond=0)
+        await asyncio.sleep((nextelection - currt).total_seconds() if not dev else 1)
         for a in server_data:
             chann = nested_get(a, "channels", "announcements")
+            citizen_m = nested_get(a, "roles", "citizen").mention
+            tim = nextelection.astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M')
             if chann:
-                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You will be able to run for positions in government later today at "+(nextelection+timedelta(hours=12)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-        await asyncio.sleep(43200)
+                await Demobot.send_message(
+                    chann, citizen_m + "! Elections have now started. They end in two days at " + tim + ".")
+
+            next = nested_get(a, 'channels', 'elections')
+            if next:
+                await Demobot.send_message(next, '```\n```\n\n**Elections Start Here**\n\n' +
+                                           'Leader: Candidate with the largest difference between up and down wins.\n' +
+                                           'Representative: Candidates with at least a third of the generic win.\n\n' +
+                                           'Click the reactions to toggle a vote. You can vote more than once.\n' +
+                                           '**Remember to vote the generic!**')
+                nested_set({}, a, 'elections', 'msg')
+                le = nested_get(a, 'elections', 'leader')
+                for b in le:
+                    c = await Demobot.send_message(
+                        next, '.\n\n**Leader Candidate**\n' + nested_get(a, 'elections', 'leader', b).desc +
+                              '\n\nVotes: **0 - 0**')
+                    await Demobot.add_reaction(c, '👍')
+                    await Demobot.add_reaction(c, '👎')
+                    nested_set(nested_get(a, 'elections', 'leader', b).ii, a, 'elections', 'msg', c.id)
+                er = nested_get(a, 'elections', 'representative')
+                out = '.\n\n**Representative Candidates**\nYou must vote the generic vote!\n\n'
+                key = 127462
+                count = ('\n\nVotes: **0 | ' + '0 - ' * len(er))[:-3] + '**'
+                for b in er:
+                    out += chr(key) + ' ' + nested_get(a, 'elections', 'representative', b).desc + '\n'
+                    nested_set(nested_get(a, 'elections', 'representative', b).ii, a, 'elections', 'msg', key)
+                    key += 1
+                c = await Demobot.send_message(next, out + count)
+                await Demobot.add_reaction(c, '🗳')
+                for d in range(127462, key):
+                    await Demobot.add_reaction(c, chr(d))
+                nested_set('rep', a, 'elections', 'msg', c.id)
+        await asyncio.sleep(172800 if not dev else 1)
         for a in server_data:
-            chann = nested_get(a, "channels", "announcements")
+            chann = nested_get(a, 'channels', 'announcements')
+            citizen_m = nested_get(a, "roles", "citizen").mention
+
+            for l in nested_get(a, 'members', 'leader'):
+                await Demobot.remove_roles(l, nested_get(a, 'roles', 'leader'))
+
+            le = nested_get(a, 'elections', 'leader')
+            winner = 1000
+            user = None
+            for b in le:
+                c = nested_get(a, 'elections', 'leader', b)
+                if winner == 1000 or len(c.up) - len(c.down) > winner:
+                    winner = len(c.up) - len(c.down)
+                    user = find(lambda m: m.id == c.ii, Demobot.get_server(a).members)
+
+            for l in nested_get(a, 'members', 'representative'):
+                await Demobot.remove_roles(l, nested_get(a, 'roles', 'representative'))
+
+            generic = len(nested_get(a, 'elections', 'generic'))
+            er = nested_get(a, 'elections', 'representative')
+            users = []
+            nested_pop(a, 'elections', 'representatives')
+            for b in er:
+                c = nested_get(a, 'elections', 'representative', b)
+                nested_set(Backup(time(), len(c.up) / generic), a, 'elections', 'backup', c.ii)
+                if len(c.up) / generic >= 1 / 3 and not c.ii == user.id:
+                    users.append(find(lambda m: m.id == c.ii, Demobot.get_server(a).members))
+
+            secondary = []
+            forbid = [user.id]
+            for b in range(max(0, 3 - len(users))):
+                thing = next_backup(a, forbid)
+                secondary.append(find(lambda m: m.id == thing, Demobot.get_server(a).members))
+                forbid.append(thing)
+
+
+            await Demobot.remove_roles(user, nested_get(a, 'roles', 'representative'))
+            await Demobot.add_roles(user, nested_get(a, 'roles', 'leader'))
+
+            out = ''
+            for u in users:
+                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                out += u.mention + ', '
+
+            out = 'No one was elected representative.\n' \
+                if out == '' else out[:-2] + " have been elected representative!\n"
+            for u in secondary:
+                await Demobot.add_roles(u, nested_get(a, 'roles', 'representative'))
+                out += u.mention + ', '
+
             if chann:
-                await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! You may now run for positions in government!\nTo do so, type `I am running for (position)` (remove the parentheses).\nElections will start later today at "+(nextelection+timedelta(hours=6)).astimezone(pytz.timezone('US/Pacific')).strftime('%H:%M:%S')+" PST.")
-            nested_set(True, a, "elections", "runnable")
-        await asyncio.sleep(21600)
-        nested_set(None, a, "elections", "runnable")
-        for a in server_data:
-            chann = nested_get(a, "channels", "announcements")
-            if chann:
-                electionmsg = await Demobot.send_message(chann, "Hey "+nested_get(a, "roles", "citizen").mention+"! Elections have now started. They will last for another 48 hours..")
-            nested_set(electionmsg, a, "elections", "election")
-        await asyncio.sleep(86400*2)
+                await Demobot.send_message(chann, citizen_m + "! Elections have now ended.")
+                await Demobot.send_message(chann, user.mention + " has been elected leader!")
+                await Demobot.send_message(chann, out[:-2] + " have been made reps from the backup list.")
+
+            if not dev:
+                nested_set({}, a, 'elections')
+                nested_set(set([]), a, 'elections', 'generic')
+        await asyncio.sleep(100000)
+
+
+def next_backup(server, leader):
+    out = -1
+    rep = ''
+    backup = nested_get(server, 'elections', 'backup')
+    for a in backup:
+        if a not in leader and nested_get(server, 'elections', 'backup', a).score > out:
+            out = nested_get(server, 'elections', 'backup', a).score
+            rep = a
+    return rep
+
 
 async def minutely_check(Demobot):
     while True:
@@ -157,6 +259,7 @@ async def minutely_check(Demobot):
         await utilities.save(None, None, None, overrideperms=True)
         await asyncio.sleep(60)
 
+
 async def member_update(Demobot, before, after):
     roles = nested_get(after.server.id, 'roles')
     for a in nested_get(after.server.id, 'members'):
@@ -167,6 +270,7 @@ async def member_update(Demobot, before, after):
         except ValueError:
             pass
     await utilities.save(None, None, None, overrideperms=True)
+
 
 async def newuser(Demobot, user):
     roles_to_add = []
@@ -197,7 +301,8 @@ async def on_reaction_add(Demobot, reaction, user):
                     await Demobot.send_message(user, 'You already voted! Don\'t vote twice.')
                 else:
                     prop.voted.append(user.id)
-                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - prop.votes.none and prop.votes.up > 0:
+                    if prop.votes.up * 2 > len(nested_get(msg.server.id, 'members', 'representative')) - \
+                            prop.votes.none and prop.votes.up > 0:
                         nested_pop(msg.server.id, 'messages', 'proposals', msg.id)
                         await Demobot.clear_reactions(msg)
                         if prop.tt == 'rule':
@@ -205,7 +310,10 @@ async def on_reaction_add(Demobot, reaction, user):
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
                         elif prop.tt == 'mod':
                             await Demobot.add_reaction(msg, '✔')
-                            nm = await Demobot.send_message(nested_get(msg.server.id, 'channels', 'enf-todo'), '%s TODO:\n\n%s\n\nWhen complete, have an enforcer react with a ✔.' % (nested_get(msg.server.id, 'roles', 'enforcer').mention, prop.content))
+                            nm = await Demobot.send_message(
+                                nested_get(msg.server.id, 'channels', 'enf-todo'),
+                                '%s TODO:\n\n%s\n\nWhen complete, have an enforcer react with a ✔.' %
+                                (nested_get(msg.server.id, 'roles', 'enforcer').mention, prop.content))
                             await Demobot.add_reaction(nm, '✔')
                             nested_set(nm, msg.server.id, 'messages', 'proposals', nm.id)
                         else:
@@ -218,17 +326,55 @@ async def on_reaction_add(Demobot, reaction, user):
 
         else:
             await Demobot.remove_reaction(msg, reaction.emoji, user)
-            await Demobot.send_message(user, 'You have been imprisoned for voting because you are not a representative.')
+            await Demobot.send_message(user, 'You have been imprisoned because you are not a representative.')
             await enforcing.imprison(Demobot, user)
     elif msg.channel == nested_get(msg.server.id, "channels", "elections"):
-        pass
+        await Demobot.remove_reaction(msg, reaction.emoji, user)
+        if msg.id not in nested_get(msg.server.id, 'elections', 'msg'):
+            return
+        ii = nested_get(msg.server.id, 'elections', 'msg', msg.id)
+        if not ii == 'rep':
+            c = nested_get(msg.server.id, 'elections', 'leader', ii)
+            if reaction.emoji == '👍':
+                if msg.author.id in c.up:
+                    c.up.discard(msg.author.id)
+                else:
+                    c.up.add(msg.author.id)
+            elif reaction.emoji == '👎':
+                if msg.author.id in c.down:
+                    c.down.discard(msg.author.id)
+                else:
+                    c.down.add(msg.author.id)
+            await Demobot.edit_message(msg, new_content='.\n\n**Leader Candidate**\n' + c.desc + '\n\nVotes: **' +
+                                                        str(len(c.up)) + ' - ' + str(len(c.down)) + '**')
+        elif ii == 'rep':
+            generic = nested_get(msg.server.id, 'elections', 'generic')
+            if reaction.emoji == '🗳':
+                generic.add(msg.author.id)
+            elif msg.author.id in generic:
+                thing = nested_get(msg.server.id, 'elections', 'msg', ord(reaction.emoji))
+                c = nested_get(msg.server.id, 'elections', 'representative', thing)
+                if msg.author.id in c.up:
+                    c.up.discard(msg.author.id)
+                else:
+                    c.up.add(msg.author.id)
+            er = nested_get(msg.server.id, 'elections', 'representative')
+            out = '.\n\n**Representative Candidates**\nYou must vote the generic vote!\n\n'
+            count = '\n\nVotes: **' + str(len(generic)) + ' | '
+            key = 127462
+            for b in er:
+                out += chr(key) + ' ' + nested_get(msg.server.id, 'elections', 'representative', b).desc + '\n'
+                key += 1
+                count += str(len(nested_get(msg.server.id, 'elections', 'representative', b).up)) + ' - '
+            await Demobot.edit_message(msg, new_content=out + count[:-3] + '**')
 
 
 async def on_reaction_delete(Demobot, reaction, user):
     if user.bot:
         return
     msg = reaction.message
-    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
+    if msg.channel == nested_get(msg.server.id, "channels", "proposals") and \
+            msg.id in nested_get(msg.server.id, 'messages', 'proposals'):
         prop = nested_get(msg.server.id, 'messages', "proposals", msg.id)
         if user.id in prop.voted:
             prop.voted.remove(user.id)

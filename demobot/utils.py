@@ -113,13 +113,6 @@ def isInteger(s):
     except ValueError:
         return False
 
-class Candidate:
-    def __init__(self, usr, slogan):
-        self.usr = usr
-        self.slogan = slogan
-        self.msg = None
-    def __eq__(self, a):
-        return self.usr == a.usr
 
 class Votes:
     def __init__(self):
@@ -139,3 +132,17 @@ class Proposal:
 
     def __eq__(self, a):
         return self.msg == a.msg
+
+
+class Candidate:
+    def __init__(self, desc, ii):
+        self.desc = desc
+        self.ii = ii
+        self.up = set([])
+        self.down = set([])
+
+
+class Backup:
+    def __init__(self, time, score):
+        self.time = time
+        self.score = score
