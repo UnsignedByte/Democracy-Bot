@@ -9,6 +9,7 @@ import itertools
 import asyncio
 from random import shuffle
 from collections import OrderedDict
+from demobot.handlers import nested_get
 
 
 def format_response(string, **kwargs):
@@ -97,6 +98,10 @@ async def edit_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=No
     embed.set_footer(text=txt, icon_url=(usr.avatar_url if usr.avatar_url else usr.default_avatar_url))
     m = await Discow.edit_message(msg, embed=embed)
     return m
+
+async def not_official(u, canenf=True):
+    roles = nested_get(u.server.id, "roles")
+    return roles["judge"] not in u.roles and roles["representative"] not in u.roles and roles["leader"] not in u.roles and (canenf or roles["enforcer"] not in u.roles)
 
 async def get_owner(Demobot):
     return (await Demobot.application_info()).owner
