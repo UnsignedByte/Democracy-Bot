@@ -19,12 +19,6 @@ persistent_variables = {}
 if not os.path.exists("data/data_backup/"):
     os.makedirs("data/data_backup/")
 
-server_data = {}
-if os.path.isfile("data/settings.txt"):
-    with open("data/settings.txt", "rb") as f:
-        server_data = pickle.load(f)
-    copyfile("data/settings.txt", "data/data_backup/settings.txt")
-
 
 def add_message_handler(handler, keyword):
     message_handlers[keyword] = handler
@@ -84,6 +78,11 @@ def nested_remove(value, *keys, **kwargs):
     except ValueError:
         return
 
+server_data = {}
+if os.path.isfile("data/settings.txt"):
+    with open("data/settings.txt", "rb") as f:
+        server_data = pickle.load(f)
+    copyfile("data/settings.txt", "data/data_backup/settings.txt")
 
 print("Handler initialized")
 print("Begin Command Initialization")
@@ -308,6 +307,9 @@ async def on_reaction_add(Demobot, reaction, user):
                         if prop.tt == 'rule':
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
+                        elif prop.tt == 'nomination':
+                            await Demobot.add_reaction(msg, '✅')
+                            await Demobot.add_roles(prop.usr, prop.role)
                         elif prop.tt == 'mod':
                             await Demobot.add_reaction(msg, '✔')
                             nm = await Demobot.send_message(

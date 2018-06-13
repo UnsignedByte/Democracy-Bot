@@ -11,7 +11,6 @@ from random import shuffle
 from collections import OrderedDict
 from demobot.handlers import nested_get
 
-
 def format_response(string, **kwargs):
     if "_msg" in kwargs:
         message = kwargs["_msg"]
@@ -133,6 +132,11 @@ class Proposal:
     def __eq__(self, a):
         return self.msg == a.msg
 
+class Nomination(Proposal):
+    def __init__(self, msg, tt, content, author, usr, role):
+        Proposal.__init__(self, msg, tt, content, author)
+        self.usr = usr
+        self.role=role
 
 class Candidate:
     def __init__(self, desc, ii):
