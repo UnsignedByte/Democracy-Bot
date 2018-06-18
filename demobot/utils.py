@@ -1,6 +1,3 @@
-whitespace = [' ', '\t', '\n']
-demobot_prefix = ";"
-
 from discord import ServerRegion, Forbidden
 import datetime
 from pytz import timezone
@@ -98,12 +95,25 @@ async def edit_embed(Discow, msg, embed, time=datetime.datetime.utcnow(), usr=No
     m = await Discow.edit_message(msg, embed=embed)
     return m
 
-async def not_official(u, canenf=True):
+async def is_official(u, canenf=True):
     roles = nested_get(u.server.id, "roles")
-    return roles["judge"] not in u.roles and roles["representative"] not in u.roles and roles["leader"] not in u.roles and (canenf or roles["enforcer"] not in u.roles)
+    print(get_official(u))
+    return bool(len(get_official(u)) - (0 if canenf or roles['enforcer'] not in u.roles else 1))
+
+async def get_official(u):
+    govs = ['judge', 'representative', 'leader', 'enforcer']
+    roles = nested_get(u.server.id, "roles")
+    return [r for r in govs if roles[r] in u.roles]
 
 async def get_owner(Demobot):
     return (await Demobot.application_info()).owner
+
+async def govPos(Demobot, user, role, canEnf=True):
+    await Demobot.send_message(user, "You have been offered the "+role.name+" position in government. Would you like to accept the offer?")
+    if is_official(user, canenf=canEnf):
+        await Demobot.send_message(user, "You will lose the following positions: "+', '.join(map(lambda x:x.name, get_official(user))))
+    await Demobot.wait_for_message()
+    await Demobot.add_roles(user, role)
 
 def isInteger(s):
     try:
