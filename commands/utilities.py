@@ -76,9 +76,14 @@ async def makeAdmin(Demobot, msg, reg):
         await Demobot.add_roles(msg.mentions[0], r)
         await save(None, None, None, overrideperms=True)
 
+async def removeAdmin(Demobot, msg, reg):
+    await Demobot.remove_roles(msg.mentions[0], nested_get(msg.server.id, 'roles', 'admin'))
+
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
+add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
+add_message_handler(removeAdmin, r'remove (?P<user><@!?(?P<userid>[0-9]+)>)(\'s)? admin\Z')
 
 add_message_handler(find, r'sub (?P<key>.*)\Z')
