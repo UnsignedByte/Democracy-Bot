@@ -11,7 +11,7 @@ async def imprison(Demobot, user, reason):
     gotten = min(gotten*5, 86400)
     nested_set(gotten, user.server.id, "prisoners", user.id)
     duration = timedelta(seconds=gotten)
-    await Demobot.send_message(user, "You have been imprisoned "+reason+"\nYou should be released in "+str(duration)+'.')
+    await Demobot.send_message(user, "You have been imprisoned"+reason+"\nYou should be released in "+str(duration)+'.')
     await asyncio.sleep(gotten)
     await unimprison(Demobot, user)
 
@@ -19,8 +19,8 @@ async def enfimprison(Demobot, msg, reg):
     if nested_get(msg.server.id, "roles", "enforcer") in msg.author.roles:
         reasons = reg.group('reasons')
         if not reasons:
-            reasons = "for no reason"
-        await Demobot.send_message(msg.channel, msg.mentions[0].mention+' has been imprisoned '+reasons)
+            reasons = " for no reason"
+        await Demobot.send_message(msg.channel, msg.mentions[0].mention+' has been imprisoned'+reasons)
         await imprison(Demobot, msg.mentions[0], reasons)
     else:
         await Demobot.send_message(msg.channel, "You are not an enforcer!")
@@ -42,12 +42,12 @@ async def enfimpeach(Demobot, msg, reg):
     if nested_get(msg.server.id, "roles", "enforcer") in msg.author.roles:
         reasons = reg.group('reasons')
         if not reasons:
-            reasons = "for no reason"
-        await Demobot.send_message(msg.channel, msg.mentions[0].mention+' has been impeached '+reasons)
+            reasons = " for no reason"
+        await Demobot.send_message(msg.channel, msg.mentions[0].mention+' has been impeached'+reasons)
         await impeach(Demobot, msg.mentions[0])
     else:
         await Demobot.send_message(msg.channel, "You are not an enforcer!")
 
-add_message_handler(enfimpeach, r'impeach (?P<user><@!?(?P<userid>[0-9]+)>) (?P<reasons>.*)?\Z')
-add_message_handler(enfimprison, r'(?:imprison|jail) (?P<user><@!?(?P<userid>[0-9]+)>) (?P<reasons>.*)?\Z')
+add_message_handler(enfimpeach, r'impeach (?P<user><@!?(?P<userid>[0-9]+)>)(?P<reasons>.*)?\Z')
+add_message_handler(enfimprison, r'(?:imprison|jail) (?P<user><@!?(?P<userid>[0-9]+)>)(?P<reasons>.*)?\Z')
 add_message_handler(enfunimprison, r'(?:unimprison|release) (?P<user><@!?(?P<userid>[0-9]+)>)\Z')

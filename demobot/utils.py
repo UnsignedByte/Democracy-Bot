@@ -111,6 +111,8 @@ async def get_owner(Demobot):
 async def govPos(Demobot, user, role, canEnf=True):
     m = await Demobot.send_message(user, "You have been offered the "+role.name+" position in government. Would you like to accept the offer?")
     p = await get_official(user, not canEnf)
+    if role in p:
+        p.remove(role)
     if p:
         await Demobot.send_message(user, "You will lose the following positions: "+', '.join(map(lambda x:x.name, p)))
     def check(s):
@@ -118,8 +120,6 @@ async def govPos(Demobot, user, role, canEnf=True):
     m2 = await Demobot.wait_for_message(timeout=600, author=user, channel=m.channel, check=check)
     if m2 and m2.content.lower() in ['yes', 'y']:
         await Demobot.add_roles(user, role)
-        if role in p:
-            p.remove(role)
         await Demobot.remove_roles(user, *p)
         return True
     else:
