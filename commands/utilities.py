@@ -66,15 +66,6 @@ async def global_delete_data(Demobot, msg, reg):
             nested_remove(keys[-1], *keys[:-1])
         await save(None, None, None, overrideperms=True)
 
-async def make_server(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
-        if len(Demobot.servers) >= 10:
-            await Demobot.send_message(msg.channel, "Demobot is in more than 10 servers! Try making a new bot.")
-        else:
-            pass
-    else:
-        await Demobot.send_message(msg.channel, "You aren't the bot owner.")
-
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
