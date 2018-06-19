@@ -31,7 +31,7 @@ async def running(Demobot, msg, reg):
         await Demobot.send_message(msg.channel, "You must be a citizen!")
 
 async def nominate(Demobot, msg, reg):
-    if nested_get(msg.server.id, "roles", 'leader') in msg.author.roles :
+    if nested_get(msg.server.id, "roles", 'leader') in msg.author.roles:
         aliases = {
         'judge':'judge',
         'j':'judge',

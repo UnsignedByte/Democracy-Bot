@@ -115,6 +115,9 @@ async def govPos(Demobot, user, role, canEnf=True):
     await Demobot.wait_for_message()
     await Demobot.add_roles(user, role)
 
+def is_citizen(user):
+    return nested_get(user.server.id, 'roles', 'citizen') in user.roles
+
 def isInteger(s):
     try:
         int(s)

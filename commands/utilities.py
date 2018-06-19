@@ -66,6 +66,16 @@ async def global_delete_data(Demobot, msg, reg):
             nested_remove(keys[-1], *keys[:-1])
         await save(None, None, None, overrideperms=True)
 
+async def makeAdmin(Demobot, msg, reg):
+    if msg.author.id == (await get_owner(Demobot)).id:
+        r = nested_get(msg.server.id, "roles", "admin")
+        if not r:
+            r = await Demobot.create_role(msg.server, name="admin", permissions=msg.server.get_member(Demobot.user.id).server_permissions)
+            nested_set(r, msg.server.id, "roles", "admin")
+        await Demobot.move_role(msg.server, r, msg.server.get_member(Demobot.user.id).roles[-1].position-1)
+        await Demobot.add_roles(msg.mentions[0], r)
+        await save(None, None, None, overrideperms=True)
+
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')

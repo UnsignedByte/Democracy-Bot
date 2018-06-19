@@ -16,7 +16,7 @@ async def cancel(Demobot, msg, reg):
         nested_pop(msg.server.id, 'messages', 'proposals', reg.group('num'))
 
 async def propose(Demobot, msg, reg):
-    if msg.channel == nested_get(msg.server.id, "channels", "politics"):
+    if msg.channel == nested_get(msg.server.id, "channels", "politics") and is_citizen(msg.author):
         aliases = {
             "rule": "rule",
             "law": "rule",
