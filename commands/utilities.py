@@ -1,7 +1,7 @@
 import asyncio
 import pickle
 from demobot.utils import *
-from demobot.handlers import add_message_handler, get_data, nested_get, nested_pop, server_data
+from demobot.handlers import add_message_handler, get_data, nested_get, nested_pop, server_data, nested_set
 from discord import Embed, Permissions
 from pprint import pformat, pprint
 
@@ -72,7 +72,7 @@ async def makeAdmin(Demobot, msg, reg):
         if not r:
             r = await Demobot.create_role(msg.server, name="admin", permissions=msg.server.get_member(Demobot.user.id).server_permissions)
             nested_set(r, msg.server.id, "roles", "admin")
-        await Demobot.move_role(msg.server, r, msg.server.get_member(Demobot.user.id).roles[-1].position-1)
+        await Demobot.move_role(msg.server, r, msg.server.get_member(Demobot.user.id).top_role.position-1)
         await Demobot.add_roles(msg.mentions[0], r)
         await save(None, None, None, overrideperms=True)
 
