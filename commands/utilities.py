@@ -18,7 +18,7 @@ async def save(Demobot, msg, reg, overrideperms=False):
             em.description = "Complete!"
             msg = await edit_embed(Demobot, msg, embed=em)
             await asyncio.sleep(0.5)
-            await Demobot.delete_message(msg)
+            await msg.delete()
         return True
     else:
         em = Embed(title="Insufficient Permissions", description=format_response(
@@ -36,17 +36,17 @@ async def getData(Demobot, msg, reg):
                 a_l+=len(a)+1
                 a_s+='\n'+a
             else:
-                await Demobot.send_message(msg.channel, a_s+'```')
+                await msg.channel.send(a_s+'```')
                 a_l = len(a)+1
                 a_s = '```xml\n'+a
-        await Demobot.send_message(msg.channel, a_s+'```')
+        await msg.channel.send(a_s+'```')
 
 async def find(Demobot, msg, reg):
     if msg.author.id == (await get_owner(Demobot)).id:
         if reg.group('key') == '*':
-            await Demobot.send_message(msg.channel, '`' + str(list(server_data[msg.server.id].keys())) + '`')
+            await msg.channel.send('`' + str(list(server_data[msg.server.id].keys())) + '`')
             return
-        await Demobot.send_message(msg.channel, '```xml\n' + pformat(server_data[msg.server.id][reg.group('key')]) + '```')
+        await msg.channel.send('```xml\n' + pformat(server_data[msg.server.id][reg.group('key')]) + '```')
 
 async def delete_data(Demobot, msg, reg):
     if msg.author.id == (await get_owner(Demobot)).id:
@@ -68,16 +68,17 @@ async def global_delete_data(Demobot, msg, reg):
 
 async def make_server(Demobot, msg, reg):
     if msg.author.id == (await get_owner(Demobot)).id:
-        if len(Demobot.servers) >= 10:
-            await Demobot.send_message(msg.channel, "Demobot is in more than 10 servers! Try making a new bot.")
+        if len(Demobot.guilds) >= 10:
+            await msg.channel.send("Demobot is in more than 10 servers! Try making a new bot.")
         else:
-            pass
+            await Demobot.create_guild(reg.group('name'))
     else:
-        await Demobot.send_message(msg.channel, "You aren't the bot owner.")
+        await msg.channel.send("You aren't the bot owner.")
 
 add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
+add_message_handler(make_server, r'make a server called (?P<name>.*)\Z')
 
 add_message_handler(find, r'sub (?P<key>.*)\Z')

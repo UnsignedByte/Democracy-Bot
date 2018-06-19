@@ -22,7 +22,7 @@ class DemocracyClient(discord.Client):
             if propchan:
                 for j in deepcopy(list(demobot.handlers.nested_get(a, 'messages', 'proposals').values())):
                     self.messages.append(j.msg)
-        await self.change_presence(game=discord.Game(name='The Democracy', type=3))
+        await self.change_presence(activity=discord.Activity(name='The Democracy', type=discord.ActivityType.watching, state='Watching'), status=discord.Status.online)
         await asyncio.gather(demobot.handlers.elections_timed(self), demobot.handlers.minutely_check(self))
     async def on_message(self, message):
         await demobot.handlers.on_message(self, message)
@@ -33,7 +33,13 @@ class DemocracyClient(discord.Client):
     async def on_member_join(self, member):
         await demobot.handlers.newuser(self, member)
     async def on_reaction_add(self, reaction, user):
-        await demobot.handlers.on_reaction_add(self, reaction, user)
+        #await demobot.handlers.on_reaction_add(self, reaction, user)
+        return
+    async def on_raw_reaction_add(self, payload):
+        print(payload)
+        m = await self.get_channel(payload.channel_id).get_message(payload.message_id)
+        x = discord.utils.get(m.reactions, emoji=payload.emoji)
+        await demobot.handlers.on_reaction_add(self, x, m.guild.get_member(payload.user_id))
     async def on_reaction_remove(self, reaction, user):
         await demobot.handlers.on_reaction_delete(self, reaction, user)
 Demobot = DemocracyClient()

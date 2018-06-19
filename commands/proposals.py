@@ -5,18 +5,18 @@ from discord import Embed
 
 
 async def cancel(Demobot, msg, reg):
-    if reg.group('num') in nested_get(msg.server.id, 'messages', 'proposals').keys():
-        prop = nested_get(msg.server.id, 'messages', 'proposals', reg.group('num'))
+    if reg.group('num') in nested_get(msg.guild.id, 'messages', 'proposals').keys():
+        prop = nested_get(msg.guild.id, 'messages', 'proposals', reg.group('num'))
         if not prop.author == msg.author:
-            await Demobot.send_message(msg.channel, 'You didn\'t create that prop!')
+            await msg.channel.send('You didn\'t create that prop!')
             return
-        em = Embed(title=prop.tt.title()+' Proposal', description='%s\n\n%s\n\n*(Canceled)*' % (prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'), colour=nested_get(msg.server.id, "roles", "representative").colour)
-        await Demobot.edit_message(prop.msg, nested_get(msg.server.id, "roles", "representative").mention, embed=em)
-        await Demobot.clear_reactions(prop.msg)
-        nested_pop(msg.server.id, 'messages', 'proposals', reg.group('num'))
+        em = Embed(title=prop.tt.title()+' Proposal', description='%s\n\n%s\n\n*(Canceled)*' % (prop.msg.id, '~~'+'~~\n~~'.join(prop.content.splitlines())+'~~'), colour=nested_get(msg.guild.id, "roles", "representative").colour)
+        await prop.msg.edit(nested_get(msg.guild.id, "roles", "representative").mention, embed=em)
+        await prop.msg.clear_reactions()
+        nested_pop(msg.guild.id, 'messages', 'proposals', reg.group('num'))
 
 async def propose(Demobot, msg, reg):
-    if msg.channel == nested_get(msg.server.id, "channels", "politics"):
+    if msg.channel.id == nested_get(msg.guild.id, "channels", "politics"):
         aliases = {
             "rule": "rule",
             "law": "rule",
@@ -33,17 +33,16 @@ async def propose(Demobot, msg, reg):
             type = aliases[reg.group("type").lower()]
         else:
             type = "rule"
-        propchan = nested_get(msg.server.id, "channels", 'proposals')
-        newm = await Demobot.send_message(propchan, '\u200D')
-        em = Embed(title=type.title()+' Proposal', description=('ID: %s\n\n%s' % (newm.id, reg.group("content"))), colour = nested_get(msg.server.id, "roles", "representative").colour)
-        newm = await Demobot.edit_message(
-            newm, nested_get(msg.server.id, "roles", "representative").mention, embed=em)
+        propchan = msg.guild.get_channel(nested_get(msg.guild.id, "channels", 'proposals'))
+        newm = await propchan.send('\u200D')
+        em = Embed(title=type.title()+' Proposal', description=('ID: %s\n\n%s' % (newm.id, reg.group("content"))), colour = nested_get(msg.guild.id, "roles", "representative").colour)
+        newm = await newm.edit(nested_get(msg.guild.id, "roles", "representative").mention, embed=em)
 
         propobj = Proposal(newm, type, reg.group('content'), msg.author)
-        nested_set(propobj, msg.server.id, 'messages', 'proposals', newm.id)
-        await Demobot.add_reaction(newm, "👍")
-        await Demobot.add_reaction(newm, "👎")
-        await Demobot.add_reaction(newm, "🤷")
+        nested_set(propobj, msg.guild.id, 'messages', 'proposals', newm.id)
+        await newm.add_reaction("👍")
+        await newm.add_reaction("👎")
+        await newm.add_reaction("🤷")
         await save(None, None, None, overrideperms=True)
 
 add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\s)*?)\Z')
