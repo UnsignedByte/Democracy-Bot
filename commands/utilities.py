@@ -84,6 +84,6 @@ add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
-add_message_handler(removeAdmin, r'remove (?P<user><@!?(?P<userid>[0-9]+)>)(\'s)? admin\Z')
+add_message_handler(removeAdmin, r'del (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
 
 add_message_handler(find, r'sub (?P<key>.*)\Z')
