@@ -308,8 +308,11 @@ async def on_reaction_add(Demobot, reaction, user):
                             await Demobot.add_reaction(msg, '✅')
                             await Demobot.send_message(nested_get(msg.server.id, "channels", "rules"), prop.content)
                         elif prop.tt == 'nomination':
-                            await Demobot.add_reaction(msg, '✅')
-                            await Demobot.add_roles(prop.usr, prop.role)
+                            a = await govPos(Demobot, prop.usr, prop.role)
+                            if a:
+                                await Demobot.add_reaction(msg, '✅')
+                            else:
+                                await Demobot.add_reaction(msg, '❌')
                         elif prop.tt == 'mod':
                             await Demobot.add_reaction(msg, '✔')
                             nm = await Demobot.send_message(

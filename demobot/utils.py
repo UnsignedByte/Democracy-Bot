@@ -100,20 +100,30 @@ async def is_official(u, canenf=True):
     print(get_official(u))
     return bool(len(get_official(u)) - (0 if canenf or roles['enforcer'] not in u.roles else 1))
 
-async def get_official(u):
-    govs = ['judge', 'representative', 'leader', 'enforcer']
+async def get_official(u, getenf=True):
+    govs = ['judge', 'representative', 'leader'] + (['enforcer'] if getenf else [])
     roles = nested_get(u.server.id, "roles")
-    return [r for r in govs if roles[r] in u.roles]
+    return [roles[r] for r in govs if roles[r] in u.roles]
 
 async def get_owner(Demobot):
     return (await Demobot.application_info()).owner
 
 async def govPos(Demobot, user, role, canEnf=True):
-    await Demobot.send_message(user, "You have been offered the "+role.name+" position in government. Would you like to accept the offer?")
-    if is_official(user, canenf=canEnf):
-        await Demobot.send_message(user, "You will lose the following positions: "+', '.join(map(lambda x:x.name, get_official(user))))
-    await Demobot.wait_for_message()
-    await Demobot.add_roles(user, role)
+    m = await Demobot.send_message(user, "You have been offered the "+role.name+" position in government. Would you like to accept the offer?")
+    p = await get_official(user, not canEnf)
+    if p:
+        await Demobot.send_message(user, "You will lose the following positions: "+', '.join(map(lambda x:x.name, p)))
+    def check(s):
+        return s.content.lower() in ['yes', 'no', 'y', 'n']
+    m2 = await Demobot.wait_for_message(timeout=600, author=user, channel=m.channel, check=check)
+    if m2 and m2.content.lower() in ['yes', 'y']:
+        await Demobot.add_roles(user, role)
+        if role in p:
+            p.remove(role)
+        await Demobot.remove_roles(user, *p)
+        return True
+    else:
+        return False
 
 def is_citizen(user):
     return nested_get(user.server.id, 'roles', 'citizen') in user.roles
