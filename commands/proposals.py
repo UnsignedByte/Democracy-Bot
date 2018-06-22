@@ -46,5 +46,22 @@ async def propose(Demobot, msg, reg):
         await Demobot.add_reaction(newm, "🤷")
         await save(None, None, None, overrideperms=True)
 
+async def complaint(Demobot, msg, reg):
+    if msg.channel == nested_get(msg.server.id, "channels", "politics") and is_citizen(msg.author):
+        type = 'complaint'
+        propchan = nested_get(msg.server.id, "channels", 'proposals')
+        newm = await Demobot.send_message(propchan, '\u200D')
+        em = Embed(title=type.title()+' Proposal', description=('ID: %s\n\n%s' % (newm.id, reg.group("content"))), colour = nested_get(msg.server.id, "roles", "representative").colour)
+        newm = await Demobot.edit_message(
+            newm, nested_get(msg.server.id, "roles", "representative").mention, embed=em)
+
+        propobj = Proposal(newm, type, reg.group('content'), msg.author)
+        nested_set(propobj, msg.server.id, 'messages', 'proposals', newm.id)
+        await Demobot.add_reaction(newm, "👍")
+        await Demobot.add_reaction(newm, "👎")
+        await Demobot.add_reaction(newm, "🤷")
+        await save(None, None, None, overrideperms=True)
+
+
 add_message_handler(propose, r'(?P<type>.*?)\s*prop(?:osal)?:\s*(?P<content>(?:.|\s)*?)\Z')
 add_message_handler(cancel, r'\s*cancel\s*prop\s*(?P<num>[0-9]*)\Z')
