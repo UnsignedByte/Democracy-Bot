@@ -1,7 +1,7 @@
 import asyncio
 import pickle
 from demobot.utils import *
-from demobot.handlers import add_message_handler, get_data, nested_get, nested_pop, server_data, nested_set
+from demobot.handlers import add_message_handler, get_data, nested_get, nested_pop, server_data, nested_set, nested_append, nested_remove
 from discord import Embed, Permissions
 from pprint import pformat, pprint
 
