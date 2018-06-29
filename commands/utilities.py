@@ -6,7 +6,7 @@ from discord import Embed, Permissions
 from pprint import pformat, pprint
 
 async def save(Demobot, msg, reg, overrideperms=False):
-    if overrideperms or msg.author.id == "418827664304898048" or msg.author.id == '418921871333916683':
+    if overrideperms or is_mod(Demobot, msg.author):
         if not overrideperms:
             em = Embed(title="Saving Data...", description="Saving...", colour=0xd32323)
             msg = await send_embed(Demobot, msg, em)
@@ -27,7 +27,7 @@ async def save(Demobot, msg, reg, overrideperms=False):
         return False
 
 async def getData(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
+    if is_mod(Demobot, msg.author):
         dat = pformat(get_data()[0])
         a_l = 0
         a_s = '```xml'
@@ -42,14 +42,14 @@ async def getData(Demobot, msg, reg):
         await Demobot.send_message(msg.channel, a_s+'```')
 
 async def find(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
+    if is_mod(Demobot, msg.author):
         if reg.group('key') == '*':
             await Demobot.send_message(msg.channel, '`' + str(list(server_data[msg.server.id].keys())) + '`')
             return
         await Demobot.send_message(msg.channel, '```xml\n' + pformat(server_data[msg.server.id][reg.group('key')]) + '```')
 
 async def delete_data(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
+    if is_mod(Demobot, msg.author):
         keys = [msg.server.id] + reg.group('path').split()
         if isinstance(nested_get(*keys[:-1]), dict):
             nested_pop(*keys)
@@ -58,7 +58,7 @@ async def delete_data(Demobot, msg, reg):
         await save(None, None, None, overrideperms=True)
 
 async def global_delete_data(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
+    if is_mod(Demobot, msg.author):
         keys = reg.group('path').split()
         if isinstance(nested_get(*keys[:-1]), dict):
             nested_pop(*keys)
@@ -66,8 +66,21 @@ async def global_delete_data(Demobot, msg, reg):
             nested_remove(keys[-1], *keys[:-1])
         await save(None, None, None, overrideperms=True)
 
+async def makeMod(Demobot, msg, reg):
+    if is_mod(Demobot, msg.author):
+        nested_append(msg.mentions[0], 'moderators')
+        await save(None, None, None, overrideperms=True)
+    else:
+        await Demobot.send_message(msg.channel, 'You are not mod!')
+async def removeMod(Demobot, msg, reg):
+    if msg.author == (await get_owner(Demobot)):
+        nested_remove(msg.mentions[0], 'moderators')
+        await save(None, None, None, overrideperms=True)
+    else:
+        await Demobot.send_message(msg.channel, 'You are not owner!')
+
 async def makeAdmin(Demobot, msg, reg):
-    if msg.author.id == (await get_owner(Demobot)).id:
+    if is_mod(Demobot, msg.author):
         r = nested_get(msg.server.id, "roles", "admin")
         if not r:
             r = await Demobot.create_role(msg.server, name="admin", permissions=msg.server.get_member(Demobot.user.id).server_permissions)
@@ -83,6 +96,8 @@ add_message_handler(save, r'save\Z')
 add_message_handler(getData, r'getdata\Z')
 add_message_handler(delete_data, r'(?:remove|delete) (?P<path>.*)\Z')
 add_message_handler(global_delete_data, r'global (?:remove|delete) (?P<path>.*)\Z')
+add_message_handler(makeMod, r'make (?P<user><@!?(?P<userid>[0-9]+)>) mod\Z')
+add_message_handler(removeMod, r'del (?P<user><@!?(?P<userid>[0-9]+)>) mod\Z')
 add_message_handler(makeAdmin, r'make (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
 add_message_handler(removeAdmin, r'del (?P<user><@!?(?P<userid>[0-9]+)>) admin\Z')
 
