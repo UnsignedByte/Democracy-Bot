@@ -6,7 +6,7 @@ from discord import Embed, Permissions
 from pprint import pformat, pprint
 
 async def save(Demobot, msg, reg, overrideperms=False):
-    if overrideperms or is_mod(Demobot, msg.author):
+    if overrideperms or (await is_mod(Demobot, msg.author)):
         if not overrideperms:
             em = Embed(title="Saving Data...", description="Saving...", colour=0xd32323)
             msg = await send_embed(Demobot, msg, em)
@@ -27,7 +27,7 @@ async def save(Demobot, msg, reg, overrideperms=False):
         return False
 
 async def getData(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         dat = pformat(get_data()[0])
         a_l = 0
         a_s = '```xml'
@@ -42,14 +42,14 @@ async def getData(Demobot, msg, reg):
         await Demobot.send_message(msg.channel, a_s+'```')
 
 async def find(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         if reg.group('key') == '*':
             await Demobot.send_message(msg.channel, '`' + str(list(server_data[msg.server.id].keys())) + '`')
             return
         await Demobot.send_message(msg.channel, '```xml\n' + pformat(server_data[msg.server.id][reg.group('key')]) + '```')
 
 async def delete_data(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         keys = [msg.server.id] + reg.group('path').split()
         if isinstance(nested_get(*keys[:-1]), dict):
             nested_pop(*keys)
@@ -58,7 +58,7 @@ async def delete_data(Demobot, msg, reg):
         await save(None, None, None, overrideperms=True)
 
 async def global_delete_data(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         keys = reg.group('path').split()
         if isinstance(nested_get(*keys[:-1]), dict):
             nested_pop(*keys)
@@ -67,7 +67,7 @@ async def global_delete_data(Demobot, msg, reg):
         await save(None, None, None, overrideperms=True)
 
 async def makeMod(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         nested_append(msg.mentions[0], 'moderators')
         await save(None, None, None, overrideperms=True)
     else:
@@ -80,7 +80,7 @@ async def removeMod(Demobot, msg, reg):
         await Demobot.send_message(msg.channel, 'You are not owner!')
 
 async def makeAdmin(Demobot, msg, reg):
-    if is_mod(Demobot, msg.author):
+    if (await is_mod(Demobot, msg.author)):
         r = nested_get(msg.server.id, "roles", "admin")
         if not r:
             r = await Demobot.create_role(msg.server, name="admin", permissions=msg.server.get_member(Demobot.user.id).server_permissions)
