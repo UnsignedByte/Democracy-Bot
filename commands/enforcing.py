@@ -38,16 +38,5 @@ async def enfunimprison(Demobot, msg, reg):
 async def impeach(Demobot, user):
     await Demobot.remove_roles(user, *[v for k, v in nested_get(user.server.id, "roles").items() if k not in ['prisoner', 'citizen']])
 
-async def enfimpeach(Demobot, msg, reg):
-    if nested_get(msg.server.id, "roles", "enforcer") in msg.author.roles:
-        reasons = reg.group('reasons')
-        if not reasons:
-            reasons = " for no reason"
-        await Demobot.send_message(msg.channel, msg.mentions[0].mention+' has been impeached'+reasons)
-        await impeach(Demobot, msg.mentions[0])
-    else:
-        await Demobot.send_message(msg.channel, "You are not an enforcer!")
-
-add_message_handler(enfimpeach, r'impeach (?P<user><@!?(?P<userid>[0-9]+)>)(?P<reasons>.*)?\Z')
 add_message_handler(enfimprison, r'(?:imprison|jail) (?P<user><@!?(?P<userid>[0-9]+)>)(?P<reasons>.*)?\Z')
 add_message_handler(enfunimprison, r'(?:unimprison|release) (?P<user><@!?(?P<userid>[0-9]+)>)\Z')

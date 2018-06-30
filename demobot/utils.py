@@ -108,6 +108,9 @@ async def get_official(u, getenf=True):
 async def get_owner(Demobot):
     return (await Demobot.application_info()).owner
 
+async def is_mod(Demobot, user):
+    return user == (await get_owner(Demobot)) or user in nested_get('moderators')
+
 async def govPos(Demobot, user, role, canEnf=True):
     m = await Demobot.send_message(user, "You have been offered the "+role.name+" position in government. Would you like to accept the offer?")
     p = await get_official(user, not canEnf)
